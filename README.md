@@ -46,6 +46,12 @@ Setelah masuk, isian, review, dan hasil di PWA **hanya untuk lingkungan itu send
 | `/admin/master/lingkungan`, `/admin/master/misa` | Master data Lingkungan dan Misa (CRUD) |
 | `/admin/pin` | Reset PIN lingkungan ke 123456 |
 
+## Tampilan
+
+- **Logo paroki** (`docs/logo.png`) tampil di header PWA, halaman masuk, login Back Office, dan sidebar. Versi ringan dan ikon aplikasi ada di `public/` (`logo.png`, `icon-192.png`, `icon-512.png`, `apple-touch-icon.png`). Untuk mengganti logo, ganti `docs/logo.png` lalu jalankan `python scripts/make-logos.py .` (butuh Pillow).
+- **Warna:** hijau tua (`--accent-dark`) untuk header PWA dan sidebar, hijau (`--accent`) untuk tombol dan tautan. Diatur di `src/app/globals.css`.
+- **Back Office memakai sidebar** sebagai satu-satunya navigasi: Sesi Kolekte, Lingkungan / Wilayah, Misa, PIN Lingkungan, dan Keluar. Di HP sidebar menjadi bilah atas.
+
 ## Yang sengaja belum ada
 
 Service worker dan draft offline, audit log umum (jejak review ada di `section_review` dan `session_review`), laporan/export, layar kelola pengguna Back Office. Pembuat tidak diberi notifikasi bila bagiannya diedit pereview.

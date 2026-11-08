@@ -287,6 +287,8 @@ stateDiagram-v2
 | FR-BO-04 | Admin Keuangan **Approve** (sesi Closed) atau **Return** dengan catatan dan memilih bagian yang dibuka ulang. Admin biasa hanya melihat. | High |
 | FR-BO-05 | Review total tidak mengubah angka; hanya approve atau return. | High |
 | FR-BO-06 | **Master data Lingkungan dan Misa (CRUD)** oleh Admin dan Admin Keuangan: tambah, ubah (Lingkungan: nama, urutan; Misa: nama, **jenis Minggu atau Jumat Pertama**, urutan), aktif/nonaktif, dan hapus hanya bila belum dipakai. Sabtu Sore/Minggu 1/Minggu 2, pecahan, dan jenis kantong bukan master data. | High |
+| FR-BO-12 | **Navigasi Back Office hanya lewat sidebar** (Sesi Kolekte, Lingkungan / Wilayah, Misa, PIN Lingkungan, Keluar); halaman tidak memiliki tombol navigasi lain. Di layar kecil sidebar menjadi bilah atas. | Medium |
+| FR-UI-01 | **Identitas visual:** logo Paroki Santo Yohanes Gabriel Perboyre di header PWA, halaman masuk, login Back Office, sidebar, dan ikon aplikasi; warna hijau (header dan sidebar hijau tua, tombol hijau). | Medium |
 | FR-BO-11 | **Reset PIN lingkungan** oleh Admin / Admin Keuangan: PIN kembali ke **123456**, wajib diganti lagi saat masuk berikutnya, dan semua perangkat lingkungan itu keluar. Admin tidak melihat atau menentukan PIN yang dipilih lingkungan. Halaman menampilkan status tiap lingkungan (PIN bawaan, sudah diganti, terkunci). | High |
 | FR-BO-07 | Laporan rekap dan export Excel/PDF. **Belum dibangun.** | Medium |
 | FR-BO-08 | Audit log umum. **Belum dibangun**; saat ini jejak review tersimpan di `section_review` (APPROVE, EDIT) dan `session_review` (APPROVE, RETURN). | Medium |

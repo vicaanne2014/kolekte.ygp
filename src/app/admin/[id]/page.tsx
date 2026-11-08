@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { db } from "@/lib/admin";
 import { requireBo } from "@/lib/auth";
@@ -33,7 +32,6 @@ export default async function AdminSession({
 
   return (
     <main className="wide">
-      <p><Link href="/admin">← Daftar sesi</Link></p>
       <div className="row">
         <h1>{s.lingkungan?.nama}</h1>
         <span className={`badge ${s.status}`}>{STATUS_LABEL[s.status]}</span>

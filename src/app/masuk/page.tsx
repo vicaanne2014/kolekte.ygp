@@ -16,7 +16,12 @@ export default async function MasukPage({ searchParams }: { searchParams: Promis
 
   return (
     <main>
-      <h1>Kolekte</h1>
+      <div className="hero">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/logo.png" alt="Logo Paroki Santo Yohanes Gabriel Perboyre" />
+        <h1>Masuk</h1>
+        <p className="muted">Pilih lingkungan / wilayah dan masukkan PIN</p>
+      </div>
       <Msg e={e} />
       <form action={masuk} className="card">
         <label htmlFor="lingkungan">Lingkungan / Wilayah</label>

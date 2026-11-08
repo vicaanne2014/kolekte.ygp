@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { db } from "@/lib/admin";
 import { requireBo } from "@/lib/auth";
@@ -57,13 +56,7 @@ export default async function MasterPage({
 
   return (
     <main className="wide">
-      <p><Link href="/admin">← Daftar sesi</Link></p>
-      <h1>Master Data</h1>
-      <div className="actions" style={{ marginTop: 0, marginBottom: 16 }}>
-        {Object.entries(MASTER).map(([k, d]) => (
-          <Link key={k} href={`/admin/master/${k}`} className={k === key ? "btn" : "btn sec"}>{d.title}</Link>
-        ))}
-      </div>
+      <h1>Master Data — {def.title}</h1>
       <Msg e={e} />
 
       <form action={addMaster} className="card">

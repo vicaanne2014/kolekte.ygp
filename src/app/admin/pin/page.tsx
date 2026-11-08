@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { db } from "@/lib/admin";
 import { requireBo } from "@/lib/auth";
 import { resetPin } from "../../actions";
@@ -22,7 +21,6 @@ export default async function AdminPinPage({ searchParams }: { searchParams: Pro
 
   return (
     <main className="wide">
-      <p><Link href="/admin">← Daftar sesi</Link></p>
       <h1>PIN Lingkungan</h1>
       <Msg e={e} />
       <div className="card" style={{ overflowX: "auto" }}>

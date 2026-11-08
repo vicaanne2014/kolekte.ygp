@@ -2,12 +2,11 @@ import Link from "next/link";
 import { db } from "@/lib/admin";
 import { requireBo } from "@/lib/auth";
 import { STATUS_LABEL, misaLabel, rp } from "@/lib/kolekte";
-import { logout } from "@/app/actions";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminHome() {
-  const user = await requireBo();
+  await requireBo();
   const { data } = await db
     .from("kolekte_session")
     .select("id,tanggal,kategori,status,grand_total,lingkungan(nama),misa(nama)")
@@ -21,14 +20,7 @@ export default async function AdminHome() {
 
   return (
     <main className="wide">
-      <div className="row">
-        <h1>Sesi Kolekte</h1>
-        <div className="actions" style={{ marginTop: 0 }}>
-          <Link href="/admin/master/lingkungan" className="btn sec">Master Data</Link>
-          <Link href="/admin/pin" className="btn sec">PIN Lingkungan</Link>
-          <form action={logout}><button className="sec" type="submit">Keluar ({user.role === "ADMIN_KEUANGAN" ? "Admin Keuangan" : "Admin"})</button></form>
-        </div>
-      </div>
+      <h1>Sesi Kolekte</h1>
       <div className="card" style={{ overflowX: "auto" }}>
         <table>
           <thead>
