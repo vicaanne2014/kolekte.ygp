@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { db } from "@/lib/admin";
 import { requireBo } from "@/lib/auth";
 import { MASTER, type Field } from "@/lib/master";
+import { urutMisa } from "@/lib/misa";
 import { hapusMaster, toggleMaster } from "../../master-actions";
 import ConfirmButton from "@/components/ConfirmButton";
 import Msg from "@/components/Msg";
@@ -28,13 +29,14 @@ export default async function MasterList({
   const jenisField = def.fields.find((f) => f.name === "jenis");
   const jenis = jenisField?.options?.some((o) => o.v === sp.jenis) ? (sp.jenis as string) : "";
 
-  let query = db.from(def.table).select(["id", "aktif", ...def.fields.map((f) => f.name)].join(","));
+  // Tabel tanpa kolom rahasia (Misa) dibaca penuh agar created_at ikut; lainnya hanya kolom yang ditampilkan.
+  let query = db.from(def.table).select(def.newestFirst ? "*" : ["id", "aktif", ...def.fields.map((f) => f.name)].join(","));
   if (st) query = query.eq("aktif", st === "aktif");
   if (jenis) query = query.eq("jenis", jenis);
   if (q) query = query.ilike("nama", `%${q.replace(/[%_\\]/g, "\\$&")}%`);
   for (const o of def.order) query = query.order(o.col, { ascending: o.asc });
   const { data } = await query;
-  const rows = (data ?? []) as any[];
+  const rows = def.newestFirst ? urutMisa((data ?? []) as any[]) : ((data ?? []) as any[]);
 
   // Alamat daftar saat ini, agar setelah Nonaktifkan/Hapus pencarian dan filter tidak hilang
   const qs = new URLSearchParams();

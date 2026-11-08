@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { db } from "@/lib/admin";
 import { requirePwa } from "@/lib/pwa-auth";
+import { ambilMisa } from "@/lib/misa";
 import { KATEGORI_LABEL, KATEGORI_MISA, SECTIONS, STATUS_LABEL, rp } from "@/lib/kolekte";
 import RekapKantong from "@/components/RekapKantong";
 
@@ -20,8 +21,7 @@ export default async function HasilPage({
   const today = new Date().toLocaleDateString("sv-SE", { timeZone: "Asia/Jakarta" });
   const tanggal = sp.tanggal || today;
 
-  const { data: misas } = await db
-    .from("misa").select("id,nama,jenis").eq("aktif", true).order("urutan").order("nama");
+  const misas = await ambilMisa({ aktif: true });
   const misa = misas?.find((m) => m.id === sp.misa);
 
   let sessions: any[] = [];

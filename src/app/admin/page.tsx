@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { db } from "@/lib/admin";
 import { requireBo } from "@/lib/auth";
+import { ambilMisa } from "@/lib/misa";
 import { KATEGORI_LABEL, STATUS_LABEL, misaLabel, rp } from "@/lib/kolekte";
 import Msg from "@/components/Msg";
 
@@ -23,9 +24,9 @@ export default async function AdminHome({ searchParams }: { searchParams: Promis
   const dari = TGL.test(sp.dari ?? "") ? sp.dari! : "";
   const sampai = TGL.test(sp.sampai ?? "") ? sp.sampai! : "";
 
-  const [{ data: daftarLing }, { data: daftarMisa }] = await Promise.all([
+  const [{ data: daftarLing }, daftarMisa] = await Promise.all([
     db.from("lingkungan").select("id,nama").order("urutan").order("nama"),
-    db.from("misa").select("id,nama").order("urutan").order("nama"),
+    ambilMisa(),
   ]);
 
   let query = db
@@ -82,7 +83,7 @@ export default async function AdminHome({ searchParams }: { searchParams: Promis
           <label htmlFor="m">Misa</label>
           <select id="m" name="m" defaultValue={m}>
             <option value="">Semua</option>
-            {daftarMisa?.map((x) => <option key={x.id} value={x.id}>{x.nama}</option>)}
+            {daftarMisa.map((x) => <option key={x.id} value={x.id}>{x.nama}</option>)}
           </select>
         </div>
         <div className="f">

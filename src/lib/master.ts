@@ -13,6 +13,7 @@ export type MasterDef = {
   table: string;
   fields: Field[];
   order: { col: string; asc: boolean }[];
+  newestFirst?: boolean; // urut terbaru di atas (tanpa urutan manual); tabel harus tanpa kolom rahasia
 };
 
 export const MASTER: Record<string, MasterDef> = {
@@ -37,8 +38,8 @@ export const MASTER: Record<string, MasterDef> = {
           { v: "JUMAT_PERTAMA", l: "Jumat Pertama (satu misa)" },
         ],
       },
-      { name: "urutan", label: "Urutan", type: "number", editable: true },
     ],
-    order: [{ col: "urutan", asc: true }, { col: "nama", asc: true }],
+    order: [],
+    newestFirst: true, // Misa: yang terakhir ditambahkan di paling atas, tanpa kolom urutan
   },
 };

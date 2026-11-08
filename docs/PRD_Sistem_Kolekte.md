@@ -109,7 +109,7 @@ Admin menambah nama misa/perayaan dan memilih **jenis**-nya.
 | 3 | Minggu Advent 1 | Minggu | Sabtu Sore / Minggu 1 / Minggu 2 |
 | 4 | Jumat Pertama bulan November | Jumat Pertama | tidak ada (satu misa) |
 
-Dikelola Admin dan Admin Keuangan di Back Office (tambah, ubah nama/jenis/urutan, aktif/nonaktif; tidak dihapus). Jumat Pertama dicatat **satu baris master per bulan** (mis. "Jumat Pertama bulan Desember"), jadi tidak ada pilihan bulan 1–12 terpisah.
+Dikelola Admin dan Admin Keuangan di Back Office (tambah, ubah nama/jenis, aktif/nonaktif, hapus bila belum dipakai). **Tidak ada kolom urutan**: misa yang paling baru ditambahkan tampil paling atas (di daftar Back Office dan di pilihan PWA). Jumat Pertama dicatat **satu baris master per bulan** (mis. "Jumat Pertama bulan Desember"), jadi tidak ada pilihan bulan 1–12 terpisah.
 
 **Pilihan tetap (konstanta, bukan master):** Sabtu Sore, Minggu 1, Minggu 2.
 
@@ -286,7 +286,7 @@ stateDiagram-v2
 | FR-BO-03 | Detail sesi: rincian tiap bagian per pecahan, subtotal, **total keseluruhan**, rekap per pecahan **per kantong** (tidak digabung), nama pembuat/pereview, dan tanda "Diedit oleh …" bila pereview mengubah isian (satu-satunya tempat edit pereview terlihat; pembuat tidak diberi notifikasi). | High |
 | FR-BO-04 | Admin Keuangan **Approve** (sesi Closed) atau **Return** dengan catatan dan memilih bagian yang dibuka ulang. Admin biasa hanya melihat. | High |
 | FR-BO-05 | Review total tidak mengubah angka; hanya approve atau return. | High |
-| FR-BO-06 | **Master data Lingkungan dan Misa (CRUD)** oleh Admin dan Admin Keuangan: tambah, ubah (Lingkungan: nama, urutan; Misa: nama, **jenis Minggu atau Jumat Pertama**, urutan), aktif/nonaktif, dan hapus hanya bila belum dipakai. Sabtu Sore/Minggu 1/Minggu 2, pecahan, dan jenis kantong bukan master data. | High |
+| FR-BO-06 | **Master data Lingkungan dan Misa (CRUD)** oleh Admin dan Admin Keuangan: tambah, ubah (Lingkungan: nama, urutan; Misa: nama, **jenis Minggu atau Jumat Pertama**; tanpa urutan, yang terbaru di atas), aktif/nonaktif, dan hapus hanya bila belum dipakai. Sabtu Sore/Minggu 1/Minggu 2, pecahan, dan jenis kantong bukan master data. | High |
 | FR-BO-13 | **Daftar dengan pencarian dan filter:** Sesi Kolekte (cari teks; filter status, lingkungan, misa, rentang tanggal), Master Lingkungan dan Misa (cari nama; filter status, dan jenis untuk Misa), dan PIN Lingkungan (cari nama; filter status PIN). Filter berupa parameter alamat sehingga bisa dibagikan/dimuat ulang. | Medium |
 | FR-BO-14 | **Tambah dan Ubah di halaman tersendiri** untuk master data (`/admin/master/{key}/baru` dan `/admin/master/{key}/{id}`); daftar hanya menampilkan data dengan aksi Ubah, Nonaktifkan/Aktifkan, dan Hapus (dengan konfirmasi). Setelah aksi, daftar kembali dengan pencarian dan filter yang sama. | Medium |
 | FR-UI-02 | **Notifikasi (toast) di Back Office dan PWA** setiap ada perubahan yang berhasil (masuk/keluar, simpan draft, submit, approve, edit, ganti/reset PIN, tambah/ubah/hapus/aktifkan master, tutup/kembalikan sesi). Pop-up kanan bawah, hilang otomatis dalam beberapa detik dan bisa ditutup. Pesan galat tetap tampil di dalam halaman. Belum ada pusat notifikasi antar pengguna. | Medium |
@@ -436,8 +436,8 @@ erDiagram
     MISA { uuid id PK
       string nama
       string jenis "MINGGU/JUMAT_PERTAMA"
-      int urutan
-      bool aktif }
+      bool aktif
+      datetime created_at "terbaru tampil di atas" }
     KOLEKTE_SESSION { uuid id PK
       uuid lingkungan_id FK
       date tanggal

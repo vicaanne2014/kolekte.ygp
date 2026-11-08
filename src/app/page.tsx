@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { db } from "@/lib/admin";
 import { requirePwa } from "@/lib/pwa-auth";
+import { ambilMisa } from "@/lib/misa";
 import { keluar, startSession } from "./actions";
 import NameField from "@/components/NameField";
 import MisaFields from "@/components/MisaFields";
@@ -12,8 +13,7 @@ export const dynamic = "force-dynamic";
 export default async function Home({ searchParams }: { searchParams: Promise<{ e?: string }> }) {
   const me = await requirePwa();
   const { e } = await searchParams;
-  const { data: misas } = await db
-    .from("misa").select("id,nama,jenis").eq("aktif", true).order("urutan").order("nama");
+  const misas = await ambilMisa({ aktif: true });
   const today = new Date().toLocaleDateString("sv-SE", { timeZone: "Asia/Jakarta" });
 
   return (
@@ -39,7 +39,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ e
         <label htmlFor="tanggal">Tanggal</label>
         <input id="tanggal" name="tanggal" type="date" required defaultValue={today} />
 
-        <MisaFields misas={misas ?? []} />
+        <MisaFields misas={misas} />
 
         <div className="actions"><button type="submit">Lanjut</button></div>
       </form>

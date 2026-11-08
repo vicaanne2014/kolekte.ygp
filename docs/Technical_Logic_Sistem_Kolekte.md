@@ -6,7 +6,7 @@
 | Tanggal | 9 November 2026 |
 | Dokumen induk | [PRD_Sistem_Kolekte.md](PRD_Sistem_Kolekte.md) |
 | Stack | Next.js 15 (Server Actions) + Supabase (PostgreSQL + Auth) |
-| Sumber kebenaran skema dan fungsi | Migrasi berurutan: [001_init.sql](../supabase/migrations/001_init.sql), [002_jumat_pertama_pilihan.sql](../supabase/migrations/002_jumat_pertama_pilihan.sql), [003_lingkungan_master_pin.sql](../supabase/migrations/003_lingkungan_master_pin.sql) |
+| Sumber kebenaran skema dan fungsi | Migrasi berurutan: [001_init.sql](../supabase/migrations/001_init.sql), [002_jumat_pertama_pilihan.sql](../supabase/migrations/002_jumat_pertama_pilihan.sql), [003_lingkungan_master_pin.sql](../supabase/migrations/003_lingkungan_master_pin.sql), [004_pin_bawaan_patch.sql](../supabase/migrations/004_pin_bawaan_patch.sql), [005_misa_terbaru_di_atas.sql](../supabase/migrations/005_misa_terbaru_di_atas.sql) |
 
 Dokumen ini menjelaskan **logika teknis**: konstanta, rumus, validasi, perubahan status, masuk PWA dengan PIN, fungsi database, dan kasus tepi. DDL lengkap tidak disalin ke sini agar tidak berbeda dengan migrasi.
 
@@ -44,7 +44,7 @@ Mengubah pecahan = ubah kode **dan** fungsi SQL `valid_nilai`. Tidak ada layar k
 |---|---|
 | `nama` | Unik. Mis. Minggu Kerahiman Ilahi, Minggu Biasa XXI, Minggu Advent 1, Jumat Pertama bulan November |
 | `jenis` | `MINGGU` (memakai kategori Sabtu Sore/Minggu 1/Minggu 2) atau `JUMAT_PERTAMA` (satu misa, tanpa kategori). Dipilih Admin saat menambah misa |
-| `urutan`, `aktif` | Urutan tampil dan status |
+| `aktif`, `created_at` | Status dan waktu dibuat. **Tidak ada urutan manual**: daftar (Back Office dan pilihan PWA) menampilkan misa terbaru di paling atas, diurutkan di aplikasi dari `created_at` (`src/lib/misa.ts`). Sebelum migrasi 005 dijalankan, urut nama |
 
 Jumat Pertama dicatat sebagai satu baris master per bulan (mis. "Jumat Pertama bulan Desember"); tidak ada pilihan bulan 1–12 terpisah.
 

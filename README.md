@@ -8,6 +8,8 @@ Next.js 15 + Supabase. Spesifikasi: [docs/PRD_Sistem_Kolekte.md](docs/PRD_Sistem
    1. `supabase/migrations/001_init.sql`
    2. `supabase/migrations/002_jumat_pertama_pilihan.sql`
    3. `supabase/migrations/003_lingkungan_master_pin.sql`
+   4. `supabase/migrations/004_pin_bawaan_patch.sql`
+   5. `supabase/migrations/005_misa_terbaru_di_atas.sql`
 
    Bila sebagian sudah pernah dijalankan, lanjutkan dari yang belum. Data uji yang ada dipertahankan.
 2. Buat user Back Office: seeder `npm run seed:admin -- email@contoh.com ADMIN_KEUANGAN` (butuh `.env.local`), atau **Authentication → Users → Add user** lalu:

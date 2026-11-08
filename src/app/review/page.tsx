@@ -3,6 +3,7 @@ import { db } from "@/lib/admin";
 import { SECTIONS, STATUS_LABEL, rp, sesiNama } from "@/lib/kolekte";
 import { approveSections } from "@/app/actions";
 import { requirePwa } from "@/lib/pwa-auth";
+import { ambilMisa } from "@/lib/misa";
 import NameField from "@/components/NameField";
 import LinesTable from "@/components/LinesTable";
 import ReviewForm, { type ReviewItem } from "@/components/ReviewForm";
@@ -22,7 +23,7 @@ export default async function ReviewPage({
   const tanggal = sp.tanggal || today;
   const nama = (sp.nama ?? "").trim();
 
-  const { data: misas } = await db.from("misa").select("id,nama").eq("aktif", true).order("urutan").order("nama");
+  const misas = await ambilMisa({ aktif: true });
   const ready = !!(sp.tanggal && sp.misa && nama);
 
   let sessions: any[] = [];
