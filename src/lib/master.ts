@@ -20,8 +20,14 @@ export const MASTER: Record<string, MasterDef> = {
     title: "Misa",
     table: "misa",
     fields: [
-      { name: "nama", label: "Nama", type: "text", editable: true },
-      { name: "pilih_bulan", label: "Minta bulan (Jumat Pertama)", type: "checkbox", editable: true },
+      { name: "nama", label: "Nama (mis. Minggu Biasa XXI)", type: "text", editable: true },
+      {
+        name: "jenis", label: "Jenis", type: "select", editable: true,
+        options: [
+          { v: "MINGGU", l: "Minggu (pilih Sabtu Sore / Minggu 1 / Minggu 2)" },
+          { v: "JUMAT_PERTAMA", l: "Jumat Pertama (satu misa)" },
+        ],
+      },
       { name: "urutan", label: "Urutan", type: "number", editable: true },
     ],
     order: [{ col: "urutan", asc: true }, { col: "nama", asc: true }],

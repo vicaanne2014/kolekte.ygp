@@ -10,7 +10,7 @@ export default async function AdminHome() {
   const user = await requireBo();
   const { data } = await db
     .from("kolekte_session")
-    .select("id,tanggal,lingkungan,bulan,status,grand_total,misa(nama)")
+    .select("id,tanggal,lingkungan,kategori,status,grand_total,misa(nama)")
     .order("tanggal", { ascending: false })
     .limit(200);
 
@@ -38,7 +38,7 @@ export default async function AdminHome() {
               <tr key={s.id}>
                 <td>{s.tanggal}</td>
                 <td>{s.lingkungan}</td>
-                <td>{misaLabel(s.misa.nama, s.bulan)}</td>
+                <td>{misaLabel(s.misa?.nama, s.kategori)}</td>
                 <td><span className={`badge ${s.status}`}>{STATUS_LABEL[s.status]}</span></td>
                 <td className="num">{rp(s.grand_total)}</td>
                 <td><Link href={`/admin/${s.id}`}>Buka</Link></td>

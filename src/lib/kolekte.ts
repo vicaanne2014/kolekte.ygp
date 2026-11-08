@@ -1,11 +1,18 @@
-export const BULAN = [
-  "Januari", "Februari", "Maret", "April", "Mei", "Juni",
-  "Juli", "Agustus", "September", "Oktober", "November", "Desember",
-];
+// Kategori misa (konstanta, bukan master). Tidak dipakai untuk misa bertanda Jumat Pertama.
+export const KATEGORI_MISA = [
+  { v: "SABTU_SORE", l: "Sabtu Sore" },
+  { v: "MINGGU_1", l: "Minggu 1" },
+  { v: "MINGGU_2", l: "Minggu 2" },
+] as const;
+export const KATEGORI_LABEL: Record<string, string> = Object.fromEntries(KATEGORI_MISA.map((k) => [k.v, k.l]));
 
-// "Minggu 1" atau "Jumat Pertama · Maret"
-export const misaLabel = (nama: string, bulan?: number | null) =>
-  bulan ? `${nama} · ${BULAN[bulan - 1]}` : nama;
+// "Minggu Biasa XXI · Sabtu Sore", atau "Jumat Pertama bulan November" (tanpa kategori)
+export const misaLabel = (nama: string | null | undefined, kategori?: string | null) =>
+  nama ? (kategori ? `${nama} · ${KATEGORI_LABEL[kategori] ?? kategori}` : nama) : "—";
+
+// "Sta. Veronica (Minggu 1)" bila ada kategori
+export const sesiNama = (lingkungan: string, kategori?: string | null) =>
+  kategori ? `${lingkungan} (${KATEGORI_LABEL[kategori] ?? kategori})` : lingkungan;
 
 // Konstanta (bukan master data). Harus sama dengan valid_nilai() dan valid_lingkungan() di SQL.
 export const PECAHAN = [100000, 75000, 50000, 20000, 10000, 5000, 2000, 1000, 500, 200, 100] as const;
@@ -49,7 +56,7 @@ const ERRORS: Record<string, string> = {
   TANGGAL_INVALID: "Tanggal tidak valid (maksimal besok).",
   LINGKUNGAN_INVALID: "Lingkungan tidak valid.",
   MISA_INVALID: "Misa tidak valid.",
-  BULAN_INVALID: "Pilih bulan (1–12) untuk Jumat Pertama.",
+  KATEGORI_INVALID: "Pilih Sabtu Sore, Minggu 1, atau Minggu 2.",
   TIPE_INVALID: "Bagian tidak valid.",
   LINES_INVALID: "Data isian tidak valid.",
   SESSION_NOT_FOUND: "Sesi tidak ditemukan.",

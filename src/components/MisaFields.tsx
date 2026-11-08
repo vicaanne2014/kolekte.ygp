@@ -1,16 +1,16 @@
 "use client";
 
 import { useState } from "react";
-import { BULAN } from "@/lib/kolekte";
+import { KATEGORI_MISA } from "@/lib/kolekte";
 
-type Misa = { id: string; nama: string; pilih_bulan: boolean };
+type Misa = { id: string; nama: string; jenis: string };
 
-// Pilih Misa (master data). Bila misa meminta bulan (Jumat Pertama), tampilkan pilihan bulan 1–12.
-export default function MisaFields({
-  misas, defaultMisa, defaultBulan,
-}: { misas: Misa[]; defaultMisa?: string; defaultBulan: number }) {
-  const [id, setId] = useState(defaultMisa ?? "");
-  const pilihBulan = misas.find((m) => m.id === id)?.pilih_bulan ?? false;
+// Pilih Misa (master data). Misa berjenis MINGGU meminta kategori (Sabtu Sore / Minggu 1 / Minggu 2);
+// misa berjenis JUMAT_PERTAMA hanya satu misa, jadi tanpa kategori.
+export default function MisaFields({ misas }: { misas: Misa[] }) {
+  const [id, setId] = useState("");
+  const pakaiKategori = misas.find((m) => m.id === id)?.jenis === "MINGGU";
+
   return (
     <>
       <label htmlFor="misa">Misa</label>
@@ -18,11 +18,13 @@ export default function MisaFields({
         <option value="" disabled>Pilih misa…</option>
         {misas.map((m) => <option key={m.id} value={m.id}>{m.nama}</option>)}
       </select>
-      {pilihBulan && (
+
+      {pakaiKategori && (
         <>
-          <label htmlFor="bulan">Bulan</label>
-          <select id="bulan" name="bulan" required defaultValue={defaultBulan}>
-            {BULAN.map((b, i) => <option key={b} value={i + 1}>{i + 1} — {b}</option>)}
+          <label htmlFor="kategori">Sabtu Sore / Minggu 1 / Minggu 2</label>
+          <select id="kategori" name="kategori" required defaultValue="">
+            <option value="" disabled>Pilih…</option>
+            {KATEGORI_MISA.map((k) => <option key={k.v} value={k.v}>{k.l}</option>)}
           </select>
         </>
       )}

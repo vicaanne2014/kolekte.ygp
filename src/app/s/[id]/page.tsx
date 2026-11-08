@@ -21,7 +21,7 @@ export default async function SessionPage({ params }: { params: Promise<{ id: st
       <p><Link href="/">← Kembali</Link></p>
       <h1>{s.lingkungan}</h1>
       <div className="card">
-        <div className="row"><span>{s.tanggal} · {misaLabel(s.misa.nama, s.bulan)}</span>
+        <div className="row"><span>{s.tanggal} · {misaLabel(s.misa?.nama, s.kategori)}</span>
           <span className={`badge ${s.status}`}>{STATUS_LABEL[s.status]}</span></div>
         <div className="row total" style={{ marginTop: 8 }}><span>Total</span><span>{rp(s.grand_total)}</span></div>
         {s.status === "READY_FOR_REVIEW" && <div className="muted">Menunggu review Admin Keuangan.</div>}

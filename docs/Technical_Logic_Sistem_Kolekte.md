@@ -6,7 +6,7 @@
 | Tanggal | 8 November 2026 |
 | Dokumen induk | [PRD_Sistem_Kolekte.md](PRD_Sistem_Kolekte.md) |
 | Stack | Next.js 15 (Server Actions) + Supabase (PostgreSQL + Auth) |
-| Sumber kebenaran skema dan fungsi | [001_init.sql](../supabase/migrations/001_init.sql) (satu file) |
+| Sumber kebenaran skema dan fungsi | [001_init.sql](../supabase/migrations/001_init.sql) lalu [002_jumat_pertama_pilihan.sql](../supabase/migrations/002_jumat_pertama_pilihan.sql) |
 
 Dokumen ini menjelaskan **logika teknis**: konstanta, rumus, validasi, perubahan status, fungsi database, dan kasus tepi. DDL lengkap tidak disalin ke sini agar tidak berbeda dengan migrasi.
 
@@ -26,14 +26,16 @@ Didefinisikan di dua tempat yang harus selalu sama: kode (`src/lib/kolekte.ts`) 
 
 **Jenis kantong (4):** `RED` (Kantong Merah), `YELLOW` (Kantong Kuning), `PARKIR`, `INTENSI`. Tidak ada kategori di dalam kantong.
 
+**Kategori misa (3):** `SABTU_SORE`, `MINGGU_1`, `MINGGU_2`. Hanya untuk misa berjenis MINGGU. Didefinisikan di `src/lib/kolekte.ts` (`KATEGORI_MISA`) dan dibatasi constraint `kolekte_session_kategori_chk` di SQL.
+
 Mengubah salah satu daftar ini = ubah kode **dan** fungsi SQL (lalu jalankan ulang fungsinya). Tidak ada layar kelola.
 
 ### 1.2 Master data: hanya `misa`
 
 | Kolom | Arti |
 |---|---|
-| `nama` | Unik. Seed: Sabtu Sore, Minggu 1, Minggu 2, Jumat Pertama |
-| `pilih_bulan` | true = pembuat wajib memilih bulan 1–12 (Jumat Pertama) |
+| `nama` | Unik. Nama misa/perayaan, mis. Minggu Kerahiman Ilahi, Minggu Biasa XXI, Minggu Advent 1, Jumat Pertama bulan November |
+| `jenis` | `MINGGU` (memakai kategori Sabtu Sore/Minggu 1/Minggu 2) atau `JUMAT_PERTAMA` (satu misa, tanpa kategori). Dipilih Admin saat menambah misa |
 | `urutan`, `aktif` | Urutan tampil dan status. Tidak ada hapus, hanya nonaktif |
 
 Dikelola Admin dan Admin Keuangan di `/admin/master/misa`.
@@ -48,7 +50,7 @@ Semua uang adalah **integer rupiah** (`bigint` di database). Tidak ada desimal d
 nilai_baris        = nilai pecahan × qty
 subtotal_section   = Σ nilai_baris        (semua baris section)
 grand_total_sesi   = Σ subtotal_section   (RED + YELLOW + PARKIR + INTENSI)
-rekap_pecahan      = Σ qty per nilai      (lintas section, untuk mencocokkan uang fisik)
+rekap_pecahan      = Σ qty per (kantong, nilai)   (DIPISAH per kantong, tidak digabung lintas kantong; untuk mencocokkan uang fisik)
 ```
 
 Contoh (satu kantong): 2×100.000 + 2×75.000 + 4×50.000 + 10×20.000 + 7×10.000 + 12×5.000 + 5×2.000 + 30×1.000 + 8×500 + 5×200 + 10×100 = **926.000**.
@@ -66,9 +68,9 @@ Contoh (satu kantong): 2×100.000 + 2×75.000 + 4×50.000 + 10×20.000 + 7×10.0
 | V-01 | Nama 2–60 karakter | `NAMA_INVALID` |
 | V-02 | Tanggal terisi dan tidak lebih dari besok (zona Asia/Jakarta) | `TANGGAL_INVALID` |
 | V-03 | Lingkungan salah satu dari 7 nilai tetap | `LINGKUNGAN_INVALID` |
-| V-04 | Misa ada dan aktif | `MISA_INVALID` |
-| V-05 | Bila `misa.pilih_bulan`, `bulan` wajib 1–12. Bila tidak, `bulan` diabaikan (disimpan null) | `BULAN_INVALID` |
-| V-06 | Unik `(lingkungan, tanggal, misa_id)`. Bila sudah ada, sesi yang ada dikembalikan (idempoten, bukan error) | — |
+| V-04 | Misa ada dan aktif di master `misa` | `MISA_INVALID` |
+| V-05 | Misa berjenis MINGGU: `kategori` wajib salah satu dari `SABTU_SORE`/`MINGGU_1`/`MINGGU_2`. Misa berjenis JUMAT_PERTAMA: `kategori` diabaikan (disimpan null) | `KATEGORI_INVALID` |
+| V-06 | Unik `(lingkungan, tanggal, misa_id, coalesce(kategori, ''))`. Bila sudah ada, sesi yang ada dikembalikan (idempoten, bukan error) | — |
 
 ### 3.2 Baris input (`replace_lines`)
 
@@ -146,14 +148,14 @@ Tabel: `misa`, `kolekte_session`, `section`, `section_line`, `section_review`, `
 
 | Tabel | Poin penting |
 |---|---|
-| `kolekte_session` | `lingkungan` (text, dibatasi `valid_lingkungan`), `tanggal`, `misa_id`, `bulan` (1–12, nullable), `status`, `grand_total`, `created_by_name`. Unik `(lingkungan, tanggal, misa_id)`. |
+| `kolekte_session` | `lingkungan` (text, dibatasi `valid_lingkungan`), `tanggal`, `misa_id` (wajib), `kategori` (nullable; null untuk Jumat Pertama), `status`, `grand_total`, `created_by_name`. Unik lewat indeks `ux_kolekte_session`. |
 | `section` | Unik `(session_id, tipe)`. Status `DRAFT`/`SUBMITTED`/`APPROVED`. `created_by_name` diisi/ditimpa saat Submit. `note` untuk catatan Return. |
 | `section_line` | Unik `(section_id, nilai)`. `nilai` dibatasi `valid_nilai`. Menyimpan `qty` dan `nilai_baris`. |
 | `section_review` | `aksi` ∈ APPROVE, **EDIT**. EDIT menyimpan `note` "Subtotal lama -> baru". |
 | `session_review` | `aksi` ∈ APPROVE, RETURN; menyimpan `grand_total` saat review dan bagian yang dibuka ulang. |
 | `bo_user` | `user_id` (Supabase Auth) + `role` ∈ ADMIN, ADMIN_KEUANGAN. |
 
-Seed: 4 misa. Tidak ada seed lain (pecahan dan lingkungan adalah konstanta).
+Seed (contoh, ubah di Master Misa): Minggu Kerahiman Ilahi, Minggu Biasa XXI, Minggu Advent 1 (jenis Minggu) dan Jumat Pertama bulan November (jenis Jumat Pertama). Tidak ada seed lain (pecahan dan lingkungan adalah konstanta).
 
 ---
 
@@ -174,18 +176,21 @@ Setiap fungsi berjalan dalam satu transaksi dan mengunci baris yang disentuh (`f
 
 ### 6.1 Alur pengisian PWA (pembuat)
 
-1. **Data diri dan misa:** Nama, Tanggal, Misa (+ Bulan bila Jumat Pertama), Lingkungan → `open_session`.
+1. **Data diri dan misa:** Nama, Tanggal, Misa (master), Sabtu Sore/Minggu 1/Minggu 2 (hanya untuk misa Minggu), Lingkungan → `open_session`.
 2. **Pilih satu kantong** di halaman sesi, lalu **masukkan qty per pecahan** (11 baris).
 3. **Submit.**
 
 Setiap petugas memilih satu kantong, sehingga per misa per lingkungan ada 4 isian (4 `section`), masing-masing di-submit sendiri-sendiri oleh orang yang mengisinya.
 
-### 6.2 `open_session(lingkungan, tanggal, misa, bulan, nama)`
+### 6.2 `open_session(lingkungan, tanggal, misa, kategori, nama)`
 
 ```
-1. validasi V-01…V-05
-2. insert … on conflict (lingkungan, tanggal, misa_id) do nothing
-3. return id sesi (baru atau yang sudah ada)
+1. validasi V-01…V-04
+2. baca misa.jenis
+   MINGGU        : kategori wajib salah satu dari 3 nilai tetap (KATEGORI_INVALID)
+   JUMAT_PERTAMA : kategori dibuang (null)
+3. insert … on conflict (lingkungan, tanggal, misa_id, coalesce(kategori, '')) do nothing
+4. return id sesi (baru atau yang sudah ada), dicari dengan kategori IS NOT DISTINCT FROM p_kategori
 ```
 
 ### 6.3 `replace_lines(section, is_empty, lines)` (internal)
@@ -266,9 +271,9 @@ Bagian yang tidak dipilih tetap APPROVED dan tidak perlu direview ulang.
 
 Halaman `/hasil` (GET: `tanggal`, `misa`) tanpa login dan tanpa aksi tulis. Membaca sesi pada `(tanggal, misa_id)` beserta bagian dan baris, lalu menampilkan:
 
-- Tabel 7 lingkungan × (Merah, Kuning, Parkir, Intensi, Total, Status); lingkungan tanpa sesi tampil "Belum ada data".
+- Tabel per kelompok: misa Minggu dipecah per kategori (Sabtu Sore, Minggu 1, Minggu 2); Jumat Pertama satu kelompok. Tiap kelompok memuat 7 lingkungan × (Merah, Kuning, Parkir, Intensi, Total, Status); lingkungan tanpa sesi tampil "Belum ada data".
 - Total semua lingkungan, dan berapa yang sudah `CLOSED` (jumlah serta nilainya).
-- Rekap per pecahan: Σ qty dan nilai lintas semua bagian.
+- Rekap per pecahan **dipisah per kantong**: empat tabel (Merah, Kuning, Parkir, Intensi), masing-masing Σ qty dan nilai per pecahan lintas lingkungan, plus total tiap kantong. Tidak ada tabel gabungan semua kantong.
 
 Angka berasal dari `grand_total`/`subtotal` tersimpan (yang dihitung server). Sesi yang belum Closed ikut tampil dengan statusnya; hanya yang Closed dihitung sebagai "sudah final". Finalisasi tetap `bo_approve` oleh Admin Keuangan.
 
@@ -321,36 +326,37 @@ Saat ini PWA hanya punya `manifest.webmanifest` dan ikon; belum ada service work
 | 9.8 | Sesi Closed ternyata salah | Di luar alur; menunggu keputusan Q5. |
 | 9.9 | Parkir/Intensi bernilai 0 | Wajib di-submit dengan "Kosong", lalu di-approve. |
 | 9.10 | Zona waktu | Tanggal memakai Asia/Jakarta; `timestamptz` disimpan UTC. |
-| 9.11 | Jumat Pertama dengan bulan tidak sama dengan bulan tanggal | Tidak dicek; bulan adalah pilihan pembuat. |
+| 9.11 | Lingkungan yang sama bertugas di Sabtu Sore dan Minggu 1 pada perayaan yang sama | Sesi terpisah per kategori dan tanggal; masing-masing punya empat kantong sendiri. |
 | 9.12 | Misa dinonaktifkan setelah dipakai | Sesi lama tetap tampil; tidak muncul lagi di pilihan baru. |
 | 9.13 | Daftar pecahan/lingkungan perlu diubah | Ubah konstanta di kode **dan** fungsi `valid_nilai`/`valid_lingkungan` di SQL. |
+| 9.14 | Jumat Pertama bulan baru | Admin menambah baris master baru, mis. "Jumat Pertama bulan Desember" dengan jenis Jumat Pertama. |
 
 ---
 
 ## 10. 📊 Laporan (Rencana, query acuan)
 
-Rekap per pecahan lintas sesi `CLOSED`:
+Rekap per pecahan lintas sesi `CLOSED`, **dipisah per kantong**:
 
 ```sql
-select l.nilai, sum(l.qty) as total_lembar, sum(l.nilai_baris) as total_rupiah
+select s.tipe, l.nilai, sum(l.qty) as total_lembar, sum(l.nilai_baris) as total_rupiah
 from section_line l
 join section s          on s.id = l.section_id
 join kolekte_session ks on ks.id = s.session_id
 where ks.status = 'CLOSED' and ks.tanggal between :dari and :sampai
-group by l.nilai
-order by l.nilai desc;
+group by s.tipe, l.nilai
+order by s.tipe, l.nilai desc;
 ```
 
 Rekap per misa, lingkungan, dan kantong:
 
 ```sql
-select m.nama as misa, ks.bulan, ks.lingkungan, s.tipe, sum(l.nilai_baris) as total
+select m.nama as misa, ks.kategori, ks.lingkungan, s.tipe, sum(l.nilai_baris) as total
 from section_line l
 join section s          on s.id = l.section_id
 join kolekte_session ks on ks.id = s.session_id
 join misa m             on m.id = ks.misa_id
 where ks.status = 'CLOSED' and ks.tanggal between :dari and :sampai
-group by m.nama, ks.bulan, ks.lingkungan, s.tipe;
+group by m.nama, ks.kategori, ks.lingkungan, s.tipe;
 ```
 
 Uji konsistensi: Σ(nilai × total_lembar) harus sama dengan Σ total_rupiah. Laporan resmi hanya memuat sesi `CLOSED`.
@@ -367,8 +373,8 @@ Uji konsistensi: Σ(nilai × total_lembar) harus sama dengan Σ total_rupiah. La
 | T-04 | `nilai` 3000 atau 0 | `DENOM_INVALID` |
 | T-05 | Lingkungan di luar 7 nilai tetap | `LINGKUNGAN_INVALID` |
 | T-06 | Submit tanpa baris dan tanpa "Kosong" | `SECTION_EMPTY` |
-| T-07 | Pilih Jumat Pertama tanpa bulan | `BULAN_INVALID` |
-| T-08 | Pilih Minggu 1 dengan bulan terkirim | Sesi tersimpan dengan `bulan` null |
+| T-07 | Misa berjenis Minggu tanpa kategori | `KATEGORI_INVALID` |
+| T-08 | Misa berjenis Jumat Pertama dengan kategori terkirim | Sesi tersimpan dengan `kategori` null |
 | T-09 | Buka sesi yang sama dua kali | Satu sesi, tidak error |
 | T-10 | Pereview mengetik nama yang sama dengan pembuat | Berhasil (diizinkan) |
 | T-11 | Approve 3 bagian, salah satunya sudah berubah status | Tidak ada yang ter-approve (atomik) |
@@ -381,6 +387,9 @@ Uji konsistensi: Σ(nilai × total_lembar) harus sama dengan Σ total_rupiah. La
 | T-18 | Nonaktifkan misa yang sudah dipakai | Sesi lama tetap tampil; pilihan baru tanpa misa itu |
 | T-19 | Memanggil fungsi SQL dengan anon key | Ditolak (tidak ada hak execute) |
 | T-20 | Tulis ke sesi CLOSED | `SESSION_CLOSED` |
+| T-21 | Lingkungan yang sama membuka Minggu 1 dan Minggu 2 pada tanggal dan misa yang sama | Dua sesi terpisah (kategori berbeda) |
+| T-22 | Buka Jumat Pertama dua kali (lingkungan dan tanggal sama) | Satu sesi (indeks unik dengan `coalesce`) |
+| T-23 | `kategori` di luar 3 nilai tetap, langsung ke tabel | Ditolak constraint `kolekte_session_kategori_chk` |
 
 Semua skenario di atas **belum dijalankan** terhadap database sungguhan.
 

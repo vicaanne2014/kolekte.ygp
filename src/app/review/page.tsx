@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { db } from "@/lib/admin";
-import { SECTIONS, STATUS_LABEL, misaLabel, rp } from "@/lib/kolekte";
+import { SECTIONS, STATUS_LABEL, rp, sesiNama } from "@/lib/kolekte";
 import { approveSections } from "@/app/actions";
 import NameField from "@/components/NameField";
 import LinesTable from "@/components/LinesTable";
@@ -25,12 +25,11 @@ export default async function ReviewPage({
 
   let sessions: any[] = [];
   if (ready) {
-    const { data } = await db
+    const base = db
       .from("kolekte_session")
-      .select("id,lingkungan,bulan,misa(nama),section(id,tipe,status,subtotal,created_by_name,section_line(nilai,qty,nilai_baris))")
-      .eq("tanggal", tanggal)
-      .eq("misa_id", sp.misa!)
-      .order("created_at");
+      .select("id,lingkungan,kategori,misa(nama),section(id,tipe,status,subtotal,created_by_name,section_line(nilai,qty,nilai_baris))")
+      .eq("tanggal", tanggal);
+    const { data } = await base.eq("misa_id", sp.misa!).order("created_at");
     sessions = data ?? [];
   }
 
@@ -39,8 +38,8 @@ export default async function ReviewPage({
   for (const s of sessions)
     for (const { tipe, label } of SECTIONS) {
       const x = (s.section ?? []).find((y: any) => y.tipe === tipe);
-      if (!x) { others.push({ key: `${s.id}-${tipe}`, title: `${s.lingkungan} — ${label}`, status: "BELUM" }); continue; }
-      const title = `${s.lingkungan} — ${label}`;
+      if (!x) { others.push({ key: `${s.id}-${tipe}`, title: `${sesiNama(s.lingkungan, s.kategori)} — ${label}`, status: "BELUM" }); continue; }
+      const title = `${sesiNama(s.lingkungan, s.kategori)} — ${label}`;
       if (x.status !== "SUBMITTED") { others.push({ key: x.id, title, status: x.status }); continue; }
       items.push({
         id: x.id,
@@ -56,7 +55,7 @@ export default async function ReviewPage({
       });
     }
 
-  const misaNama = sessions[0] ? misaLabel(sessions[0].misa.nama, sessions[0].bulan) : "";
+  const misaNama = sessions[0] ? sessions[0].misa?.nama ?? "" : "";
 
   return (
     <main>

@@ -2,11 +2,13 @@
 
 | Item | Isi |
 |---|---|
-| Versi | 0.4 — pecahan, lingkungan, dan jenis kantong jadi konstanta; kategori kantong dihapus; Parkir dan Intensi wajib |
+| Versi | 0.5 — master Misa = nama misa/perayaan (dengan jenis Minggu atau Jumat Pertama); Sabtu Sore/Minggu 1/Minggu 2 jadi pilihan tetap |
 | Tanggal | 8 November 2026 |
 | Penyusun | Vincent (System Analyst) |
 | Status | Draft — menunggu konfirmasi Open Questions (Bagian 13) |
 | Dokumen terkait | [Technical_Logic_Sistem_Kolekte.md](Technical_Logic_Sistem_Kolekte.md) |
+
+**Perubahan dari v0.4:** **Master data Misa = nama misa/perayaan**, mis. *Minggu Kerahiman Ilahi*, *Minggu Biasa XXI*, *Minggu Advent 1*, *Jumat Pertama bulan November*. Saat menambah misa, Admin memilih **jenis**: *Minggu* atau *Jumat Pertama*. **Sabtu Sore, Minggu 1, dan Minggu 2 bukan master**, melainkan pilihan tetap yang wajib dipilih pembuat untuk misa berjenis Minggu (tidak untuk Jumat Pertama, karena hanya satu misa). Pilihan bulan 1–12 dihapus (bulan cukup ada di nama misa).
 
 **Perubahan dari v0.3:** pembuat dan pereview **boleh orang yang sama** (aturan "nama berbeda" dihapus); tiap petugas memilih satu kantong untuk diisi. pecahan (11), lingkungan (7), dan jenis kantong (Merah, Kuning, Parkir, Intensi) **bukan master data** lagi (konstanta di aplikasi). **Kategori kantong dihapus**: dari kantong langsung ke pecahan × qty. **Parkir dan Intensi wajib** diisi di setiap sesi (nilai 0 dicatat sebagai "Kosong"). Tanpa PIN untuk PWA. Pemberitahuan edit pereview hanya terlihat di Back Office. Satu-satunya master data adalah **Misa**.
 
@@ -29,8 +31,8 @@ Nilai utama: angka tercatat per pecahan (bisa diaudit), setiap bagian punya cata
 | # | Asumsi |
 |---|---|
 | A1 | Konteks: kolekte misa paroki. **7 lingkungan/wilayah** tetap (Bagian 2.5), tidak akan bertambah, disimpan sebagai konstanta (bukan master data). |
-| A2 | **Misa** adalah master data: *Sabtu Sore*, *Minggu 1*, *Minggu 2*, dan *Jumat Pertama*. Untuk misa bertanda "minta bulan" (Jumat Pertama), pembuat wajib memilih **bulan 1–12**. |
-| A3 | **Sesi Kolekte** = satu lingkungan × satu tanggal × satu misa. Konteks diisi di awal: nama pembuat, tanggal, misa (+ bulan), lingkungan. Semua data kantong menempel pada sesi ini. Tidak ada lagi isian "Minggu ke / Perayaan". |
+| A2 | **Misa** (master data) adalah nama misa/perayaan, mis. *Minggu Kerahiman Ilahi*, *Minggu Biasa XXI*, *Minggu Advent 1*, *Jumat Pertama bulan November*. Tiap misa punya **jenis**: **Minggu** (memakai kategori) atau **Jumat Pertama** (satu misa, tanpa kategori). Misa berjenis Minggu berlangsung di akhir pekan sehingga pembuat memilih salah satu dari **Sabtu Sore, Minggu 1, Minggu 2** (pilihan tetap di kode, bukan master). |
+| A3 | **Sesi Kolekte** = satu lingkungan × satu tanggal × satu misa × satu kategori (Sabtu Sore/Minggu 1/Minggu 2; kosong untuk Jumat Pertama). Konteks diisi di awal: nama pembuat, tanggal, misa (+ kategori), lingkungan. Semua data kantong menempel pada sesi ini. Tidak ada isian "Minggu ke / Perayaan" terpisah. |
 | A4 | Tidak ada kategori kantong. Tiap kantong (Merah, Kuning, Parkir, Intensi) langsung diisi per **pecahan × qty**. Keempat jenis kantong adalah konstanta. |
 | A5 | **PWA tanpa login.** Nama Pembuat dan Nama Pereview **diketik manual** dan disimpan sebagai teks. Hanya Back Office yang memakai login. |
 | A6 | Tiap petugas memilih **satu kantong** untuk diisi, sehingga ada **4 isian per misa per lingkungan** (Merah, Kuning, Parkir, Intensi). Setiap bagian punya dua peran: **pembuat** dan **pereview**. **Pembuat dan pereview boleh orang yang sama.** Review dilakukan lewat PWA **per misa** untuk semua lingkungan sekaligus. |
@@ -42,7 +44,7 @@ Nilai utama: angka tercatat per pecahan (bisa diaudit), setiap bagian punya cata
 
 ### 2.2 In-scope
 - PWA (tanpa login): journey pembuat dan journey pereview.
-- Back Office: login, daftar sesi, detail + rekap per pecahan, approve/return sesi, **master data Misa**.
+- Back Office: login, daftar sesi, detail dengan rincian per pecahan di tiap kantong, approve/return sesi, **master data Misa**.
 - Total otomatis, status workflow, jejak review.
 
 ### 2.3 Out-of-scope (fase ini)
@@ -88,14 +90,18 @@ Tidak ada layar kelola. Mengubah daftar ini berarti mengubah kode dan migrasi da
 
 ### 2.7 Master Data Misa (satu-satunya master data)
 
-| Urut | Nama | Minta bulan |
-|---|---|---|
-| 1 | Sabtu Sore | Tidak |
-| 2 | Minggu 1 | Tidak |
-| 3 | Minggu 2 | Tidak |
-| 4 | Jumat Pertama | **Ya** (pilih 1–12) |
+Admin menambah nama misa/perayaan dan memilih **jenis**-nya.
 
-Dikelola Admin dan Admin Keuangan di Back Office. Tidak dihapus, hanya dinonaktifkan.
+| Urut | Nama (contoh) | Jenis | Kategori saat input |
+|---|---|---|---|
+| 1 | Minggu Kerahiman Ilahi | Minggu | Sabtu Sore / Minggu 1 / Minggu 2 |
+| 2 | Minggu Biasa XXI | Minggu | Sabtu Sore / Minggu 1 / Minggu 2 |
+| 3 | Minggu Advent 1 | Minggu | Sabtu Sore / Minggu 1 / Minggu 2 |
+| 4 | Jumat Pertama bulan November | Jumat Pertama | tidak ada (satu misa) |
+
+Dikelola Admin dan Admin Keuangan di Back Office (tambah, ubah nama/jenis/urutan, aktif/nonaktif; tidak dihapus). Jumat Pertama dicatat **satu baris master per bulan** (mis. "Jumat Pertama bulan Desember"), jadi tidak ada pilihan bulan 1–12 terpisah.
+
+**Pilihan tetap (konstanta, bukan master):** Sabtu Sore, Minggu 1, Minggu 2.
 
 ---
 
@@ -108,7 +114,7 @@ mindmap
       Journey Pembuat
         Nama
         Tanggal
-        Misa dan Bulan bila Jumat Pertama
+        Misa dan Sabtu Sore / Minggu 1 / Minggu 2 kecuali Jumat Pertama
         Lingkungan
         Kantong Merah Kuning Parkir Intensi
         Pecahan dan qty
@@ -141,9 +147,9 @@ flowchart TD
     A([Mulai]) --> B["Ketik Nama sebagai pembuat"]
     B --> C["Pilih Tanggal"]
     C --> D["Pilih Misa dari master data"]
-    D --> E{"Misa minta bulan?"}
-    E -->|"Ya, Jumat Pertama"| F["Pilih Bulan 1 sampai 12"]
-    E -->|Tidak| G
+    D --> E{"Jenis misa?"}
+    E -->|Minggu| F["Pilih Sabtu Sore, Minggu 1, atau Minggu 2"]
+    E -->|"Jumat Pertama"| G
     F --> G["Pilih Lingkungan / Wilayah"]
     G --> H["Sesi dibuat atau dilanjutkan"]
     H --> I["Pilih kantong: Merah, Kuning, Parkir, Intensi"]
@@ -228,20 +234,20 @@ stateDiagram-v2
 | ID | Requirement | Prioritas |
 |---|---|---|
 | FR-PWA-01 | PWA tanpa login. **Nama** diketik manual (wajib, 2–60 karakter), diingat di perangkat. Nama pembuat tersimpan per bagian; nama pereview tersimpan per tindakan review. | High |
-| FR-PWA-02 | Urutan isian pembuat: **Nama → Tanggal → Misa (master data) → Bulan (hanya bila misa meminta, 1–12) → Lingkungan/Wilayah (7 pilihan tetap)**. | High |
+| FR-PWA-02 | Urutan isian pembuat: **Nama → Tanggal → Misa (master data) → Sabtu Sore / Minggu 1 / Minggu 2 (wajib untuk misa berjenis Minggu, tidak ditampilkan untuk Jumat Pertama) → Lingkungan/Wilayah (7 pilihan tetap)**. | High |
 | FR-PWA-03 | Satu lingkungan hanya punya satu sesi per kombinasi tanggal + misa; membuka lagi = melanjutkan sesi yang ada. | High |
 | FR-PWA-04 | Halaman sesi menampilkan kartu Kantong Merah, Kuning, Parkir, Intensi beserta status dan subtotal. Keempatnya wajib. | High |
 | FR-PWA-05 | Setiap kantong diisi langsung per **pecahan × qty** (11 pecahan tetap); subtotal dan total dihitung otomatis. Tidak ada kategori. | High |
 | FR-PWA-06 | Parkir dan Intensi diisi dengan pola yang sama dan **wajib**; nilai 0 dicatat dengan tanda "Kosong". | High |
 | FR-PWA-07 | Validasi: qty bilangan bulat 0–1.000.000, pecahan salah satu dari 11 pecahan tetap, tidak ada baris ganda. Bagian tidak bisa disubmit kosong kecuali ditandai "Kosong". | High |
 | FR-PWA-08 | Submit mengunci isian pembuat (status Submitted). | High |
-| FR-PWA-09 | **Review per misa:** pereview memilih tanggal + misa, mengetik namanya, lalu melihat daftar detail semua bagian Submitted dari semua lingkungan pada misa itu. | High |
+| FR-PWA-09 | **Review per misa:** pereview memilih tanggal + misa, mengetik namanya, lalu melihat daftar detail semua bagian Submitted dari semua lingkungan dan semua kategori pada misa itu. | High |
 | FR-PWA-10 | Setiap bagian punya kotak centang. **Approve** baru aktif setelah semua bagian dalam daftar dicentang (tersedia tombol "Centang semua"). | High |
 | FR-PWA-11 | Pereview dapat **Edit dulu** (ubah pecahan/qty) pada bagian Submitted, lalu kembali ke daftar dan approve. Edit dicatat (nama pereview, subtotal sebelum → sesudah). | High |
 | FR-PWA-12 | Approve memproses semua bagian yang dicentang secara atomik. Pereview boleh sama dengan pembuat. | High |
 | FR-PWA-13 | Sesi otomatis **Siap Direview** saat keempat bagian Approved (Aturan kunci #2). | High |
 | FR-PWA-14 | Draft tersimpan lokal (offline) dan tersinkron saat online. **Belum dibangun.** | Medium |
-| FR-PWA-16 | **Hasil akhir per misa (baca saja):** pilih tanggal + misa, lihat total per lingkungan dan per kantong, total semua lingkungan, status tiap lingkungan, dan rekap per pecahan. Tidak bisa menutup/finalisasi; finalisasi tetap oleh Admin Keuangan di Back Office. | High |
+| FR-PWA-16 | **Hasil akhir per misa (baca saja):** pilih tanggal + misa, lihat total per lingkungan dan per kantong, total semua lingkungan, status tiap lingkungan, dan **rekap per pecahan yang dipisah per kantong (Merah, Kuning, Parkir, Intensi), tidak digabung**. Tidak bisa menutup/finalisasi; finalisasi tetap oleh Admin Keuangan di Back Office. | High |
 | FR-PWA-15 | Dapat di-install ke home screen (manifest; service worker belum). | Medium |
 
 ### 6.2 Functional Requirements — Back Office
@@ -250,10 +256,10 @@ stateDiagram-v2
 |---|---|---|
 | FR-BO-01 | Login (hanya Back Office): Admin dan Admin Keuangan; RBAC. | High |
 | FR-BO-02 | Daftar sesi (tanggal, lingkungan, misa+bulan, status, total); antrean Siap Direview di atas. | High |
-| FR-BO-03 | Detail sesi: rincian tiap bagian per pecahan, subtotal, **total keseluruhan**, **rekap lembar per pecahan**, nama pembuat/pereview, dan tanda "Diedit oleh …" bila pereview mengubah isian (satu-satunya tempat edit pereview terlihat; pembuat tidak diberi notifikasi). | High |
+| FR-BO-03 | Detail sesi: rincian tiap bagian per pecahan, subtotal, **total keseluruhan**, rekap per pecahan **per kantong** (tidak digabung), nama pembuat/pereview, dan tanda "Diedit oleh …" bila pereview mengubah isian (satu-satunya tempat edit pereview terlihat; pembuat tidak diberi notifikasi). | High |
 | FR-BO-04 | Admin Keuangan **Approve** (sesi Closed) atau **Return** dengan catatan dan memilih bagian yang dibuka ulang. Admin biasa hanya melihat. | High |
 | FR-BO-05 | Review total tidak mengubah angka; hanya approve atau return. | High |
-| FR-BO-06 | **Master data Misa** oleh Admin dan Admin Keuangan: tambah, ubah (nama, minta bulan, urutan), aktif/nonaktif. Tidak ada hapus. Pecahan, lingkungan, dan jenis kantong bukan master data. | High |
+| FR-BO-06 | **Master data Misa** oleh Admin dan Admin Keuangan: tambah, ubah (nama, **jenis: Minggu atau Jumat Pertama**, urutan), aktif/nonaktif. Tidak ada hapus. Sabtu Sore/Minggu 1/Minggu 2, pecahan, lingkungan, dan jenis kantong bukan master data. | High |
 | FR-BO-07 | Laporan rekap dan export Excel/PDF. **Belum dibangun.** | Medium |
 | FR-BO-08 | Audit log umum. **Belum dibangun**; saat ini jejak review tersimpan di `section_review` (APPROVE, EDIT) dan `session_review` (APPROVE, RETURN). | Medium |
 | FR-BO-09 | Sesi Closed read-only. | High |
@@ -384,14 +390,14 @@ erDiagram
 
     MISA { uuid id PK
       string nama
-      bool pilih_bulan
+      string jenis "MINGGU/JUMAT_PERTAMA"
       int urutan
       bool aktif }
     KOLEKTE_SESSION { uuid id PK
       string lingkungan "7 nilai tetap"
       date tanggal
       uuid misa_id FK
-      int bulan "1-12, hanya bila misa minta bulan"
+      string kategori "SABTU_SORE/MINGGU_1/MINGGU_2, kosong bila Jumat Pertama"
       string status
       bigint grand_total
       string created_by_name }
@@ -424,10 +430,10 @@ erDiagram
 ```
 
 **Catatan data**
-- Unik: `(lingkungan, tanggal, misa_id)` pada sesi; `(session_id, tipe)` pada bagian; `(section_id, nilai)` pada baris.
+- Unik: `(lingkungan, tanggal, misa_id, kategori)` pada sesi (kategori kosong dianggap satu nilai); `(session_id, tipe)` pada bagian; `(section_id, nilai)` pada baris.
 - `lingkungan` dan `nilai` dibatasi ke nilai tetap lewat constraint database (fungsi `valid_lingkungan` dan `valid_nilai`).
 - `nilai_baris = nilai × qty` disimpan di baris sehingga rekap tidak perlu menghitung ulang.
-- `bulan` hanya terisi bila misa bertanda `pilih_bulan`.
+- `kategori` wajib untuk misa berjenis MINGGU dan kosong untuk JUMAT_PERTAMA (dijaga fungsi `open_session`; nilainya dibatasi constraint database).
 
 ---
 
@@ -518,6 +524,7 @@ Pembuat dan pereview adalah peran per tindakan, bukan akun. Orang yang sama bole
 
 **Sudah diputuskan:**
 - Lingkungan (7), pecahan (11), dan jenis kantong adalah konstanta, bukan master data. Kategori kantong dihapus.
+- Master Misa berisi nama misa/perayaan dengan **jenis** Minggu atau Jumat Pertama. Sabtu Sore/Minggu 1/Minggu 2 adalah pilihan tetap, bukan master. Jumat Pertama = satu baris master per bulan.
 - Satu-satunya master data adalah Misa, dikelola Admin dan Admin Keuangan.
 - Parkir dan Intensi **wajib**, meski nilainya 0 (ditandai "Kosong").
 - PWA **tanpa PIN**; dibuka bebas.
@@ -531,8 +538,8 @@ Pembuat dan pereview adalah peran per tindakan, bukan akun. Orang yang sama bole
 
 ## 14. ✅ Acceptance Criteria Ringkas
 
-1. Pembuat mengisi urutan: Nama → Tanggal → Misa → (Bulan bila Jumat Pertama) → Lingkungan; kombinasi lingkungan + tanggal + misa tidak ganda.
-2. Pilih Jumat Pertama menampilkan pilihan bulan 1–12 dan bulan wajib; misa lain tidak menyimpan bulan.
+1. Pembuat mengisi urutan: Nama → Tanggal → Misa → (Sabtu Sore/Minggu 1/Minggu 2 untuk misa Minggu) → Lingkungan; kombinasi lingkungan + tanggal + misa + kategori tidak ganda.
+2. Memilih misa berjenis Minggu menampilkan pilihan Sabtu Sore/Minggu 1/Minggu 2 (wajib); memilih misa berjenis Jumat Pertama tidak menampilkannya. Saat menambah misa di master, Admin wajib memilih jenis Minggu atau Jumat Pertama.
 3. Setiap kantong diisi langsung per pecahan (11 pecahan); satu baris tiap pecahan dengan qty 1 menghasilkan Rp263.800.
 4. Bagian tidak bisa disubmit kosong tanpa centang "Kosong". Parkir dan Intensi wajib di-submit (boleh "Kosong").
 5. Pereview memilih misa hari itu, mengetik nama, dan melihat bagian Submitted semua lingkungan pada misa itu, termasuk daftar bagian yang belum diisi.
@@ -540,10 +547,10 @@ Pembuat dan pereview adalah peran per tindakan, bukan akun. Orang yang sama bole
 7. Pembuat dan pereview boleh orang yang sama; kedua nama tetap wajib diisi dan tercatat.
 8. Pereview dapat mengedit bagian Submitted lalu approve; edit tercatat dan terlihat di Back Office.
 9. Sesi menjadi Siap Direview hanya setelah keempat bagian Approved.
-10. Admin Keuangan melihat total gabungan dan rekap per pecahan, dapat Approve atau Return; Admin biasa tidak bisa.
+10. Admin Keuangan melihat total gabungan dan rincian per pecahan di tiap kantong (tidak digabung), dapat Approve atau Return; Admin biasa tidak bisa.
 11. Sesi Closed tidak dapat diubah.
 12. Admin dan Admin Keuangan dapat menambah/mengubah/menonaktifkan Misa lewat web tanpa ubah kode.
-13. Di PWA, memilih tanggal + misa menampilkan total per lingkungan dan kantong, total semua lingkungan, rekap per pecahan, dan status; halaman ini tidak punya aksi ubah.
+13. Di PWA, memilih tanggal + misa menampilkan total per lingkungan dan kantong, total semua lingkungan, rekap per pecahan yang dipisah per kantong (Merah, Kuning, Parkir, Intensi), dan status; halaman ini tidak punya aksi ubah.
 
 ---
 
@@ -551,7 +558,7 @@ Pembuat dan pereview adalah peran per tindakan, bukan akun. Orang yang sama bole
 
 | Bagian | Status |
 |---|---|
-| Skema, fungsi workflow, seed Misa | ✅ `supabase/migrations/001_init.sql` |
+| Skema, fungsi workflow, seed Misa | ✅ `supabase/migrations/001_init.sql` dan `002_jumat_pertama_pilihan.sql` |
 | PWA journey pembuat | ✅ |
 | PWA journey pereview (checklist, edit, approve) | ✅ |
 | PWA hasil akhir per misa (baca saja) | ✅ |
@@ -565,6 +572,6 @@ Pembuat dan pereview adalah peran per tindakan, bukan akun. Orang yang sama bole
 
 ## 16. ➡️ Rekomendasi Langkah Selanjutnya
 
-1. Jalankan `001_init.sql` di Supabase, buat user Back Office, dan uji kedua journey end-to-end (kode belum pernah dijalankan terhadap database sungguhan).
+1. Jalankan `001_init.sql` lalu `002_jumat_pertama_pilihan.sql` di Supabase, buat user Back Office, dan uji kedua journey end-to-end (kode belum pernah dijalankan terhadap database sungguhan).
 2. Putuskan Q4 (detail Intensi) dan Q5 (koreksi setelah Closed).
 3. Lanjut ke draft offline, lalu laporan/export.

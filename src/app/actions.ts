@@ -14,12 +14,11 @@ function back(path: string, error?: string): never {
 // ---------- PWA: pembuat (tanpa login) ----------
 
 export async function startSession(f: FormData) {
-  const bulan = parseInt(str(f, "bulan"), 10);
   const { data, error } = await db.rpc("open_session", {
     p_lingkungan: str(f, "lingkungan"),
     p_tanggal: str(f, "tanggal"),
     p_misa: str(f, "misa"),
-    p_bulan: Number.isNaN(bulan) ? null : bulan,
+    p_kategori: str(f, "kategori") || null,
     p_nama: str(f, "nama"),
   });
   if (error || !data) back("/", error?.message ?? "SESSION_NOT_FOUND");

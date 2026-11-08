@@ -8,13 +8,12 @@ import Msg from "@/components/Msg";
 
 export const dynamic = "force-dynamic";
 
-// Alur pembuat: Nama → Tanggal → Misa (+ bulan bila Jumat Pertama) → Lingkungan → pilih kantong.
+// Alur pembuat: Nama → Tanggal → Misa (master) → Sabtu Sore/Minggu 1/Minggu 2 (kecuali Jumat Pertama) → Lingkungan.
 export default async function Home({ searchParams }: { searchParams: Promise<{ e?: string }> }) {
   const { e } = await searchParams;
   const { data: misas } = await db
-    .from("misa").select("id,nama,pilih_bulan").eq("aktif", true).order("urutan").order("nama");
+    .from("misa").select("id,nama,jenis").eq("aktif", true).order("urutan").order("nama");
   const today = new Date().toLocaleDateString("sv-SE", { timeZone: "Asia/Jakarta" });
-  const bulanIni = Number(today.slice(5, 7));
 
   return (
     <main>
@@ -32,7 +31,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ e
         <label htmlFor="tanggal">Tanggal</label>
         <input id="tanggal" name="tanggal" type="date" required defaultValue={today} />
 
-        <MisaFields misas={misas ?? []} defaultBulan={bulanIni} />
+        <MisaFields misas={misas ?? []} />
 
         <label htmlFor="lingkungan">Lingkungan / Wilayah</label>
         <select id="lingkungan" name="lingkungan" required defaultValue="">

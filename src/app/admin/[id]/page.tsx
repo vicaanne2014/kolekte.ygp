@@ -28,14 +28,6 @@ export default async function AdminSession({
     .eq("session_id", id);
   const by = new Map((secs ?? []).map((x: any) => [x.tipe, x]));
 
-  // Rekap lembar per pecahan lintas semua bagian
-  const rekap = new Map<number, { qty: number; nilai: number }>();
-  for (const x of secs ?? [])
-    for (const l of (x as any).section_line ?? []) {
-      const r = rekap.get(l.nilai) ?? { qty: 0, nilai: 0 };
-      rekap.set(l.nilai, { qty: r.qty + l.qty, nilai: r.nilai + Number(l.nilai_baris) });
-    }
-
   const canReview = user.role === "ADMIN_KEUANGAN" && s.status === "READY_FOR_REVIEW";
   const approved = SECTIONS.filter(({ tipe }) => by.get(tipe)?.status === "APPROVED");
 
@@ -48,7 +40,7 @@ export default async function AdminSession({
       </div>
       <Msg e={e} />
       <div className="card">
-        <div>{s.tanggal} · {misaLabel(s.misa.nama, s.bulan)}</div>
+        <div>{s.tanggal} · {misaLabel(s.misa?.nama, s.kategori)}</div>
         <div className="muted">Sesi dibuka oleh {s.created_by_name}</div>
         <div className="row total" style={{ marginTop: 8, fontSize: "1.2rem" }}><span>Total Keseluruhan</span><span>{rp(s.grand_total)}</span></div>
       </div>
@@ -73,19 +65,6 @@ export default async function AdminSession({
           </div>
         );
       })}
-
-      <div className="card">
-        <h2 style={{ marginTop: 0 }}>Rekap per Pecahan (semua bagian)</h2>
-        <table>
-          <thead><tr><th>Pecahan</th><th className="num">Jumlah lembar/koin</th><th className="num">Nilai</th></tr></thead>
-          <tbody>
-            {[...rekap.entries()].sort((a, b) => b[0] - a[0]).map(([nilai, r]) => (
-              <tr key={nilai}><td>{rp(nilai)}</td><td className="num">{r.qty}</td><td className="num">{rp(r.nilai)}</td></tr>
-            ))}
-            <tr className="total"><td colSpan={2}>Total</td><td className="num">{rp(s.grand_total)}</td></tr>
-          </tbody>
-        </table>
-      </div>
 
       {canReview && (
         <div className="card">
