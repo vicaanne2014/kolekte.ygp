@@ -1,8 +1,7 @@
-import Link from "next/link";
 import { db } from "@/lib/admin";
 import { requirePwa } from "@/lib/pwa-auth";
 import { ambilMisa } from "@/lib/misa";
-import { keluar, startSession } from "./actions";
+import { startSession } from "./actions";
 import NameField from "@/components/NameField";
 import MisaFields from "@/components/MisaFields";
 import Msg from "@/components/Msg";
@@ -18,20 +17,8 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ e
 
   return (
     <main>
-      <div className="row">
-        <h1>Kolekte</h1>
-        <div className="actions" style={{ marginTop: 0 }}>
-          <Link href="/review" className="btn sec">Review</Link>
-          <Link href="/hasil" className="btn sec">Hasil</Link>
-        </div>
-      </div>
-      <div className="row muted" style={{ marginBottom: 12 }}>
-        <span>Masuk sebagai <strong>{me.nama}</strong></span>
-        <span className="actions" style={{ marginTop: 0 }}>
-          <Link href="/pin" className="btn sec">Ganti PIN</Link>
-          <form action={keluar}><button type="submit" className="sec">Keluar</button></form>
-        </span>
-      </div>
+      <h1>Isi Kolekte</h1>
+      <div className="muted" style={{ marginBottom: 12 }}>Masuk sebagai <strong>{me.nama}</strong></div>
       <Msg e={e} />
       <form action={startSession} className="card">
         <NameField label="Nama Anda (pembuat)" />

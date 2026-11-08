@@ -57,6 +57,7 @@ Setelah masuk, isian, review, dan hasil di PWA **hanya untuk lingkungan itu send
 ## Daftar, pencarian, dan notifikasi
 
 - Semua daftar di Back Office (Sesi Kolekte, Master Lingkungan, Master Misa, PIN Lingkungan) punya **pencarian dan filter**. Tambah dan Ubah master data ada di halaman tersendiri.
+- **PWA punya menu bawah** (Review, Hasil, Ganti PIN, Keluar) seperti aplikasi seluler. Mengetuk logo/judul di header kembali ke beranda (Isi Kolekte).
 - Setiap perubahan yang berhasil (di Back Office maupun PWA) menampilkan **notifikasi pop-up** di kanan bawah, mis. "Draft tersimpan", "Bagian disetujui", "Data dihapus".
 
 ## Yang sengaja belum ada

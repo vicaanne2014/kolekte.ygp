@@ -3,6 +3,8 @@ import "./globals.css";
 import { Suspense } from "react";
 import SiteHeader from "@/components/SiteHeader";
 import Toast from "@/components/Toast";
+import PwaBottomNav from "@/components/PwaBottomNav";
+import { getPwaSession } from "@/lib/pwa-auth";
 
 export const metadata: Metadata = {
   title: "Kolekte",
@@ -15,12 +17,14 @@ export const metadata: Metadata = {
 };
 export const viewport: Viewport = { width: "device-width", initialScale: 1, themeColor: "#17462b" };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const pwa = await getPwaSession(); // ada = sudah masuk lewat PIN -> tampilkan menu bawah
   return (
     <html lang="id">
       <body>
         <SiteHeader />
         {children}
+        {pwa && <PwaBottomNav wajibGanti={pwa.wajibGanti} />}
         <Suspense fallback={null}>
           <Toast />
         </Suspense>
