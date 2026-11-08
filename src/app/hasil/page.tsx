@@ -1,13 +1,14 @@
 import Link from "next/link";
 import { db } from "@/lib/admin";
 import { requirePwa } from "@/lib/pwa-auth";
-import { KATEGORI_MISA, SECTIONS, STATUS_LABEL, rp } from "@/lib/kolekte";
+import { KATEGORI_LABEL, KATEGORI_MISA, SECTIONS, STATUS_LABEL, rp } from "@/lib/kolekte";
 import RekapKantong from "@/components/RekapKantong";
 
 export const dynamic = "force-dynamic";
 
 // Hasil akhir per misa (baca saja), HANYA untuk lingkungan yang sedang masuk.
-// Misa berjenis MINGGU dipecah per Sabtu Sore / Minggu 1 / Minggu 2; Jumat Pertama satu kelompok.
+// Misa berjenis MINGGU dipecah per Sabtu Sore / Minggu 1 / Minggu 2, tetapi hanya kategori yang dibuat lingkungan ini
+// yang tampil. Jumat Pertama tanpa kolom kategori.
 // Laporan lintas lingkungan hanya ada di Back Office. Finalisasi (Closed) oleh Admin Keuangan.
 export default async function HasilPage({
   searchParams,
@@ -34,10 +35,11 @@ export default async function HasilPage({
     sessions = data ?? [];
   }
 
-  // Kelompok: tiap kategori (misa Minggu) atau satu kelompok tanpa kategori (Jumat Pertama)
-  const groups: { v: string | null; l: string | null }[] =
-    misa?.jenis === "JUMAT_PERTAMA" ? [{ v: null, l: null }] : KATEGORI_MISA.map((k) => ({ v: k.v, l: k.l }));
-  const by = new Map(sessions.map((s) => [s.kategori ?? "", s]));
+  // Hanya sesi yang benar-benar dibuat lingkungan ini yang tampil. Kategori yang tidak dibuat
+  // (mis. Sabtu Sore/Minggu 2 milik lingkungan lain) tidak muncul, bahkan sebagai "Belum ada data".
+  const urutan: string[] = KATEGORI_MISA.map((k) => k.v);
+  const rows = [...sessions].sort((a, b) => urutan.indexOf(a.kategori ?? "") - urutan.indexOf(b.kategori ?? ""));
+  const pakaiKategori = misa?.jenis !== "JUMAT_PERTAMA";
 
   const total = sessions.reduce((t, s) => t + Number(s.grand_total), 0);
   const closed = sessions.filter((s) => s.status === "CLOSED");
@@ -86,35 +88,26 @@ export default async function HasilPage({
             <table>
               <thead>
                 <tr>
-                  {misa?.jenis !== "JUMAT_PERTAMA" && <th>Kategori</th>}
+                  {pakaiKategori && <th>Kategori</th>}
                   {SECTIONS.map((s) => <th key={s.tipe} className="num">{s.label.replace("Kantong ", "")}</th>)}
                   <th className="num">Total</th>
                   <th>Status</th>
                 </tr>
               </thead>
               <tbody>
-                {groups.map((g) => {
-                  const s = by.get(g.v ?? "");
-                  return (
-                    <tr key={g.v ?? "-"} className={s ? undefined : "muted"}>
-                      {g.l && <td>{g.l}</td>}
-                      {s ? (
-                        <>
-                          {SECTIONS.map(({ tipe }) => {
-                            const x = (s.section ?? []).find((y: any) => y.tipe === tipe);
-                            return <td key={tipe} className="num">{x ? rp(x.subtotal) : "—"}</td>;
-                          })}
-                          <td className="num total">{rp(s.grand_total)}</td>
-                          <td><span className={`badge ${s.status}`}>{STATUS_LABEL[s.status]}</span></td>
-                        </>
-                      ) : (
-                        <td colSpan={6}>Belum ada data</td>
-                      )}
-                    </tr>
-                  );
-                })}
+                {rows.map((s) => (
+                  <tr key={s.id}>
+                    {pakaiKategori && <td>{KATEGORI_LABEL[s.kategori] ?? "—"}</td>}
+                    {SECTIONS.map(({ tipe }) => {
+                      const x = (s.section ?? []).find((y: any) => y.tipe === tipe);
+                      return <td key={tipe} className="num">{x ? rp(x.subtotal) : "—"}</td>;
+                    })}
+                    <td className="num total">{rp(s.grand_total)}</td>
+                    <td><span className={`badge ${s.status}`}>{STATUS_LABEL[s.status]}</span></td>
+                  </tr>
+                ))}
                 <tr className="total">
-                  <td colSpan={misa?.jenis !== "JUMAT_PERTAMA" ? 5 : 4}>Total</td>
+                  <td colSpan={pakaiKategori ? 5 : 4}>Total</td>
                   <td className="num">{rp(total)}</td>
                   <td></td>
                 </tr>

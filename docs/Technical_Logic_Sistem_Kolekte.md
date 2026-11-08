@@ -291,7 +291,7 @@ bo_return : peran ADMIN_KEUANGAN; catatan ≥ 3; sections tidak kosong; sesi REA
 Halaman `/hasil` (GET: `tanggal`, `misa`) membaca sesi pada `(tanggal, misa_id, lingkungan_id = lingkungan login)` beserta bagian dan baris, lalu menampilkan:
 
 - Total lingkungan dan berapa sesi yang sudah `CLOSED` (jumlah serta nilainya).
-- Tabel kategori (Sabtu Sore/Minggu 1/Minggu 2 untuk misa Minggu; satu baris untuk Jumat Pertama) × (Merah, Kuning, Parkir, Intensi, Total, Status); kategori tanpa sesi tampil "Belum ada data".
+- Tabel sesi milik lingkungan ini: satu baris per kategori **yang benar-benar dibuat** (Sabtu Sore/Minggu 1/Minggu 2 untuk misa Minggu; tanpa kolom kategori untuk Jumat Pertama) × (Merah, Kuning, Parkir, Intensi, Total, Status). Kategori yang tidak dibuat lingkungan ini **tidak ditampilkan** (tidak ada baris "Belum ada data").
 - Rekap per pecahan **dipisah per kantong**: empat tabel (Merah, Kuning, Parkir, Intensi), masing-masing Σ qty dan nilai per pecahan plus total kantong. Tidak ada tabel gabungan semua kantong.
 
 Lintas lingkungan hanya tersedia di Back Office. Finalisasi tetap `bo_approve` oleh Admin Keuangan.
