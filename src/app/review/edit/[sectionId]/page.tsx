@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { db } from "@/lib/admin";
 import { SECTIONS, isTipe } from "@/lib/kolekte";
 import { reviewEdit } from "@/app/actions";
+import { requirePwa } from "@/lib/pwa-auth";
 import SectionForm from "@/components/SectionForm";
 import Msg from "@/components/Msg";
 
@@ -16,17 +17,19 @@ export default async function ReviewEditPage({
   params: Promise<{ sectionId: string }>;
   searchParams: Promise<{ nama?: string; e?: string }>;
 }) {
+  const me = await requirePwa();
   const { sectionId } = await params;
   const { nama = "", e } = await searchParams;
   if (!nama.trim()) redirect("/review");
 
   const { data: sec } = await db
     .from("section")
-    .select("id,tipe,status,is_empty,created_by_name,kolekte_session(tanggal,misa_id,lingkungan)")
+    .select("id,tipe,status,is_empty,created_by_name,kolekte_session(tanggal,misa_id,lingkungan_id)")
     .eq("id", sectionId)
     .maybeSingle();
   if (!sec || !isTipe(sec.tipe)) notFound();
   const sess: any = (sec as any).kolekte_session;
+  if (sess.lingkungan_id !== me.id) notFound();
   const back = `/review?tanggal=${sess.tanggal}&misa=${sess.misa_id}&nama=${encodeURIComponent(nama)}`;
   const label = SECTIONS.find((s) => s.tipe === sec.tipe)!.label;
 
@@ -39,7 +42,7 @@ export default async function ReviewEditPage({
     <main>
       <p><Link href={back}>← Kembali ke daftar review</Link></p>
       <h1>Edit — {label}</h1>
-      <div className="muted" style={{ marginBottom: 12 }}>{sess.lingkungan} · dibuat oleh {sec.created_by_name} · diedit oleh {nama}</div>
+      <div className="muted" style={{ marginBottom: 12 }}>{me.nama} · dibuat oleh {sec.created_by_name} · diedit oleh {nama}</div>
       <Msg e={e} />
       {sec.status !== "SUBMITTED" ? (
         <p className="muted">Bagian ini tidak lagi menunggu review.</p>

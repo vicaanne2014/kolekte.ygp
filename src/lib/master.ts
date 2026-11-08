@@ -1,5 +1,5 @@
 // Master data yang dikelola Admin / Admin Keuangan di Back Office.
-// Pecahan, lingkungan, dan jenis kantong sengaja BUKAN master data (konstanta di kode dan SQL).
+// Pecahan dan jenis kantong sengaja BUKAN master data (konstanta di kode dan SQL).
 export type Field = {
   name: string;
   label: string;
@@ -16,6 +16,15 @@ export type MasterDef = {
 };
 
 export const MASTER: Record<string, MasterDef> = {
+  lingkungan: {
+    title: "Lingkungan / Wilayah",
+    table: "lingkungan",
+    fields: [
+      { name: "nama", label: "Nama (mis. Sta. Veronica, OMK, WKRI)", type: "text", editable: true },
+      { name: "urutan", label: "Urutan", type: "number", editable: true },
+    ],
+    order: [{ col: "urutan", asc: true }, { col: "nama", asc: true }],
+  },
   misa: {
     title: "Misa",
     table: "misa",

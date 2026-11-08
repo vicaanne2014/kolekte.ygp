@@ -55,7 +55,16 @@ export async function updateMaster(f: FormData) {
   done(key, !!error);
 }
 
-// Tidak ada hapus: data yang sudah dipakai hanya dinonaktifkan.
+// Hapus hanya bila belum dipakai (database menolak bila sudah dipakai); selain itu cukup dinonaktifkan.
+export async function hapusMaster(f: FormData) {
+  await requireBo();
+  const key = str(f, "key");
+  if (!MASTER[key]) redirect("/admin");
+  const { error } = await db.from(MASTER[key].table).delete().eq("id", str(f, "id"));
+  redirect(`/admin/master/${key}${error ? "?e=MASTER_DIPAKAI" : ""}`);
+}
+
+// Nonaktifkan / aktifkan kembali.
 export async function toggleMaster(f: FormData) {
   await requireBo();
   const key = str(f, "key");

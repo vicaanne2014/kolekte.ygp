@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { db } from "@/lib/admin";
 import { SECTIONS, STATUS_LABEL, isTipe, rp } from "@/lib/kolekte";
 import { saveSection } from "@/app/actions";
+import { requirePwa } from "@/lib/pwa-auth";
 import SectionForm from "@/components/SectionForm";
 import LinesTable from "@/components/LinesTable";
 import Msg from "@/components/Msg";
@@ -16,13 +17,14 @@ export default async function SectionPage({
   params: Promise<{ id: string; tipe: string }>;
   searchParams: Promise<{ e?: string; ok?: string }>;
 }) {
+  const me = await requirePwa();
   const { id, tipe } = await params;
   const { e, ok } = await searchParams;
   if (!isTipe(tipe)) notFound();
   const meta = SECTIONS.find((s) => s.tipe === tipe)!;
 
-  const { data: session } = await db.from("kolekte_session").select("status").eq("id", id).maybeSingle();
-  if (!session) notFound();
+  const { data: session } = await db.from("kolekte_session").select("status,lingkungan_id").eq("id", id).maybeSingle();
+  if (!session || session.lingkungan_id !== me.id) notFound();
   const { data: sec } = await db.from("section").select("*").eq("session_id", id).eq("tipe", tipe).maybeSingle();
   const { data: lines } = sec
     ? await db

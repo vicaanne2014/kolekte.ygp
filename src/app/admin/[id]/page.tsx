@@ -20,7 +20,7 @@ export default async function AdminSession({
   const { id } = await params;
   const { e } = await searchParams;
 
-  const { data: s } = await db.from("kolekte_session").select("*, misa(nama)").eq("id", id).maybeSingle();
+  const { data: s } = await db.from("kolekte_session").select("*, misa(nama), lingkungan(nama)").eq("id", id).maybeSingle();
   if (!s) notFound();
   const { data: secs } = await db
     .from("section")
@@ -35,7 +35,7 @@ export default async function AdminSession({
     <main className="wide">
       <p><Link href="/admin">← Daftar sesi</Link></p>
       <div className="row">
-        <h1>{s.lingkungan}</h1>
+        <h1>{s.lingkungan?.nama}</h1>
         <span className={`badge ${s.status}`}>{STATUS_LABEL[s.status]}</span>
       </div>
       <Msg e={e} />

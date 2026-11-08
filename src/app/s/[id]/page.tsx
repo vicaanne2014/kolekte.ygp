@@ -2,24 +2,26 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { db } from "@/lib/admin";
 import { SECTIONS, STATUS_LABEL, misaLabel, rp } from "@/lib/kolekte";
+import { requirePwa } from "@/lib/pwa-auth";
 
 export const dynamic = "force-dynamic";
 
 export default async function SessionPage({ params }: { params: Promise<{ id: string }> }) {
+  const me = await requirePwa();
   const { id } = await params;
   const { data: s } = await db
     .from("kolekte_session")
     .select("*, misa(nama)")
     .eq("id", id)
     .maybeSingle();
-  if (!s) notFound();
+  if (!s || s.lingkungan_id !== me.id) notFound();
   const { data: secs } = await db.from("section").select("tipe,status,subtotal,note").eq("session_id", id);
   const by = new Map((secs ?? []).map((x) => [x.tipe, x]));
 
   return (
     <main>
       <p><Link href="/">← Kembali</Link></p>
-      <h1>{s.lingkungan}</h1>
+      <h1>{me.nama}</h1>
       <div className="card">
         <div className="row"><span>{s.tanggal} · {misaLabel(s.misa?.nama, s.kategori)}</span>
           <span className={`badge ${s.status}`}>{STATUS_LABEL[s.status]}</span></div>

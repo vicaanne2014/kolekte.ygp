@@ -3,7 +3,8 @@ import { notFound } from "next/navigation";
 import { db } from "@/lib/admin";
 import { requireBo } from "@/lib/auth";
 import { MASTER, type Field } from "@/lib/master";
-import { addMaster, toggleMaster, updateMaster } from "../../master-actions";
+import { addMaster, hapusMaster, toggleMaster, updateMaster } from "../../master-actions";
+import ConfirmButton from "@/components/ConfirmButton";
 import Msg from "@/components/Msg";
 
 export const dynamic = "force-dynamic";
@@ -44,7 +45,7 @@ export default async function MasterPage({
   const def = MASTER[key];
   if (!def) notFound();
 
-  let q = db.from(def.table).select("*");
+  let q = db.from(def.table).select(["id", "aktif", ...def.fields.map((f) => f.name)].join(","));
   for (const o of def.order) q = q.order(o.col, { ascending: o.asc });
   const { data } = await q;
   const rows = (data ?? []) as any[];
@@ -104,6 +105,11 @@ export default async function MasterPage({
                     <input type="hidden" name="aktif" value={String(!r.aktif)} />
                     <button type="submit" className="sec">{r.aktif ? "Aktif — nonaktifkan" : "Nonaktif — aktifkan"}</button>
                   </form>
+                  <form action={hapusMaster} style={{ marginTop: 6 }}>
+                    <input type="hidden" name="key" value={key} />
+                    <input type="hidden" name="id" value={r.id} />
+                    <ConfirmButton className="sec" message={`Hapus "${r.nama}"? Data yang sudah dipakai tidak bisa dihapus.`}>Hapus</ConfirmButton>
+                  </form>
                 </td>
               </tr>
             ))}
@@ -111,7 +117,7 @@ export default async function MasterPage({
           </tbody>
         </table>
       </div>
-      <p className="muted">Data tidak dihapus; yang sudah dipakai cukup dinonaktifkan.</p>
+      <p className="muted">Hapus hanya bisa untuk data yang belum dipakai. Yang sudah dipakai cukup dinonaktifkan.</p>
     </main>
   );
 }

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { db } from "@/lib/admin";
 import { SECTIONS, STATUS_LABEL, rp, sesiNama } from "@/lib/kolekte";
 import { approveSections } from "@/app/actions";
+import { requirePwa } from "@/lib/pwa-auth";
 import NameField from "@/components/NameField";
 import LinesTable from "@/components/LinesTable";
 import ReviewForm, { type ReviewItem } from "@/components/ReviewForm";
@@ -15,6 +16,7 @@ export default async function ReviewPage({
 }: {
   searchParams: Promise<{ tanggal?: string; misa?: string; nama?: string; e?: string; ok?: string }>;
 }) {
+  const me = await requirePwa();
   const sp = await searchParams;
   const today = new Date().toLocaleDateString("sv-SE", { timeZone: "Asia/Jakarta" });
   const tanggal = sp.tanggal || today;
@@ -27,8 +29,9 @@ export default async function ReviewPage({
   if (ready) {
     const base = db
       .from("kolekte_session")
-      .select("id,lingkungan,kategori,misa(nama),section(id,tipe,status,subtotal,created_by_name,section_line(nilai,qty,nilai_baris))")
-      .eq("tanggal", tanggal);
+      .select("id,kategori,misa(nama),section(id,tipe,status,subtotal,created_by_name,section_line(nilai,qty,nilai_baris))")
+      .eq("tanggal", tanggal)
+      .eq("lingkungan_id", me.id);
     const { data } = await base.eq("misa_id", sp.misa!).order("created_at");
     sessions = data ?? [];
   }
@@ -38,8 +41,8 @@ export default async function ReviewPage({
   for (const s of sessions)
     for (const { tipe, label } of SECTIONS) {
       const x = (s.section ?? []).find((y: any) => y.tipe === tipe);
-      if (!x) { others.push({ key: `${s.id}-${tipe}`, title: `${sesiNama(s.lingkungan, s.kategori)} — ${label}`, status: "BELUM" }); continue; }
-      const title = `${sesiNama(s.lingkungan, s.kategori)} — ${label}`;
+      if (!x) { others.push({ key: `${s.id}-${tipe}`, title: `${sesiNama(me.nama, s.kategori)} — ${label}`, status: "BELUM" }); continue; }
+      const title = `${sesiNama(me.nama, s.kategori)} — ${label}`;
       if (x.status !== "SUBMITTED") { others.push({ key: x.id, title, status: x.status }); continue; }
       items.push({
         id: x.id,
@@ -61,6 +64,7 @@ export default async function ReviewPage({
     <main>
       <p><Link href="/">← Kembali</Link></p>
       <h1>Review</h1>
+      <div className="muted" style={{ marginBottom: 12 }}>{me.nama}</div>
       <Msg e={sp.e} ok={sp.ok} />
 
       <form method="GET" action="/review" className="card">

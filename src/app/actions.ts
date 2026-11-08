@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { db } from "@/lib/admin";
 import { authClient, requireBo } from "@/lib/auth";
 import { isTipe } from "@/lib/kolekte";
+import { endPwaSession, requirePwa, startPwaSession } from "@/lib/pwa-auth";
 
 const str = (f: FormData, k: string) => String(f.get(k) ?? "").trim();
 function back(path: string, error?: string): never {
@@ -11,11 +12,64 @@ function back(path: string, error?: string): never {
   redirect(error ? `${path}${sep}e=${encodeURIComponent(error)}` : path);
 }
 
-// ---------- PWA: pembuat (tanpa login) ----------
+// Kode hasil fungsi PIN di SQL: >0 berhasil (versi PIN); -1 salah; -2 terkunci; -5 lingkungan tidak aktif
+const PIN_ERR: Record<number, string> = { [-1]: "PIN_WRONG", [-2]: "PIN_LOCKED", [-5]: "LINGKUNGAN_NONAKTIF" };
+const pinErr = (n: number) => PIN_ERR[n] ?? "PIN_WRONG";
+
+// ---------- PWA: masuk dengan lingkungan + PIN 6 angka ----------
+
+export async function masuk(f: FormData) {
+  const l = str(f, "lingkungan");
+  const path = `/masuk?l=${encodeURIComponent(l)}`;
+  const { data, error } = await db.rpc("check_pin", { p_lingkungan: l, p_pin: str(f, "pin") });
+  if (error) back(path, "PIN_WRONG");
+  const v = Number(data);
+  if (!(v > 0)) back(path, pinErr(v));
+  await startPwaSession(l, v);
+  redirect("/"); // bila PIN masih bawaan, halaman beranda mengarahkan ke /pin (Reset PIN)
+}
+
+export async function keluar() {
+  await endPwaSession();
+  redirect("/masuk");
+}
+
+// "Reset PIN" (pertama kali, dari PIN bawaan) dan "Ganti PIN": PIN lama 1x + PIN baru 2x (diulang).
+export async function gantiPin(f: FormData) {
+  const me = await requirePwa({ allowGanti: true });
+  const baru = str(f, "pin_baru");
+  if (baru !== str(f, "pin_ulang")) back("/pin", "PIN_MISMATCH");
+  const { data, error } = await db.rpc("change_pin", {
+    p_lingkungan: me.id, p_old: str(f, "pin_lama"), p_new: baru,
+  });
+  if (error) back("/pin", error.message);
+  const v = Number(data);
+  if (!(v > 0)) back("/pin", pinErr(v));
+  await startPwaSession(me.id, v);
+  redirect(me.wajibGanti ? "/" : "/pin?ok=1");
+}
+
+// ---------- Pengecekan kepemilikan (aksi di PWA tidak boleh menyentuh data lingkungan lain) ----------
+
+async function sessionOwnedBy(sessionId: string, lingkunganId: string) {
+  const { data } = await db.from("kolekte_session").select("lingkungan_id").eq("id", sessionId).maybeSingle();
+  return data?.lingkungan_id === lingkunganId;
+}
+
+async function sectionsOwnedBy(ids: string[], lingkunganId: string) {
+  const unique = [...new Set(ids)];
+  if (unique.length === 0) return false;
+  const { data } = await db.from("section").select("id,kolekte_session(lingkungan_id)").in("id", unique);
+  const rows = (data ?? []) as any[];
+  return rows.length === unique.length && rows.every((r) => r.kolekte_session?.lingkungan_id === lingkunganId);
+}
+
+// ---------- PWA: pembuat ----------
 
 export async function startSession(f: FormData) {
+  const me = await requirePwa();
   const { data, error } = await db.rpc("open_session", {
-    p_lingkungan: str(f, "lingkungan"),
+    p_lingkungan: me.id,
     p_tanggal: str(f, "tanggal"),
     p_misa: str(f, "misa"),
     p_kategori: str(f, "kategori") || null,
@@ -40,10 +94,12 @@ function parseLines(f: FormData): Line[] {
 }
 
 export async function saveSection(f: FormData) {
+  const me = await requirePwa();
   const session = str(f, "session");
   const tipe = str(f, "tipe");
   const path = `/s/${session}/${tipe}`;
   if (!isTipe(tipe)) back(`/s/${session}`, "TIPE_INVALID");
+  if (!(await sessionOwnedBy(session, me.id))) back("/", "BUKAN_MILIK");
 
   const nama = str(f, "nama");
   const { error } = await db.rpc("save_section", {
@@ -63,28 +119,31 @@ export async function saveSection(f: FormData) {
   redirect(`${path}?ok=1`);
 }
 
-// ---------- PWA: reviewer (tanpa login) ----------
+// ---------- PWA: pereview (hanya data lingkungan sendiri) ----------
 
 const reviewPath = (tanggal: string, misa: string, nama: string) =>
   `/review?tanggal=${encodeURIComponent(tanggal)}&misa=${encodeURIComponent(misa)}&nama=${encodeURIComponent(nama)}`;
 
-// Approve semua bagian yang dicentang reviewer (atomik).
+// Approve semua bagian yang dicentang pereview (atomik).
 export async function approveSections(f: FormData) {
+  const me = await requirePwa();
   const nama = str(f, "nama");
   const path = reviewPath(str(f, "tanggal"), str(f, "misa"), nama);
-  const { error } = await db.rpc("approve_sections", {
-    p_nama: nama,
-    p_ids: f.getAll("ids").map(String),
-  });
+  const ids = f.getAll("ids").map(String);
+  if (!(await sectionsOwnedBy(ids, me.id))) back(path, "BUKAN_MILIK");
+  const { error } = await db.rpc("approve_sections", { p_nama: nama, p_ids: ids });
   if (error) back(path, error.message);
   redirect(`${path}&ok=1`);
 }
 
-// Reviewer mengedit isian dulu (status tetap menunggu), lalu kembali ke daftar untuk approve.
+// Pereview mengedit isian dulu (status tetap menunggu), lalu kembali ke daftar untuk approve.
 export async function reviewEdit(f: FormData) {
+  const me = await requirePwa();
   const section = str(f, "section");
   const nama = str(f, "nama");
   const editPath = `/review/edit/${section}?nama=${encodeURIComponent(nama)}`;
+  if (!(await sectionsOwnedBy([section], me.id))) back("/review", "BUKAN_MILIK");
+
   const { error } = await db.rpc("review_edit_section", {
     p_section: section,
     p_nama: nama,
@@ -143,4 +202,11 @@ export async function returnSession(f: FormData) {
     p_note: str(f, "note"),
   });
   back(`/admin/${id}`, error?.message);
+}
+
+// Admin / Admin Keuangan mereset PIN lingkungan. Lingkungan itu membuat PIN baru (dan mengulanginya) saat masuk berikutnya.
+export async function resetPin(f: FormData) {
+  const user = await requireBo();
+  const { error } = await db.rpc("bo_reset_pin", { p_lingkungan: str(f, "lingkungan"), p_user: user.id });
+  back("/admin/pin", error?.message);
 }

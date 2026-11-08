@@ -14,18 +14,8 @@ export const misaLabel = (nama: string | null | undefined, kategori?: string | n
 export const sesiNama = (lingkungan: string, kategori?: string | null) =>
   kategori ? `${lingkungan} (${KATEGORI_LABEL[kategori] ?? kategori})` : lingkungan;
 
-// Konstanta (bukan master data). Harus sama dengan valid_nilai() dan valid_lingkungan() di SQL.
+// Konstanta (bukan master data). Harus sama dengan valid_nilai() di SQL.
 export const PECAHAN = [100000, 75000, 50000, 20000, 10000, 5000, 2000, 1000, 500, 200, 100] as const;
-
-export const LINGKUNGAN = [
-  "Sta. Felisitas",
-  "St. Edmund",
-  "St. Hieronimus",
-  "St. Fransiscus Xaverius",
-  "Sta. Veronica",
-  "Sta. Maria Ratu Rosari",
-  "Sta. Maria Medali Wasiat",
-] as const;
 
 export const SECTIONS = [
   { tipe: "RED", label: "Kantong Merah" },
@@ -57,6 +47,14 @@ const ERRORS: Record<string, string> = {
   LINGKUNGAN_INVALID: "Lingkungan tidak valid.",
   MISA_INVALID: "Misa tidak valid.",
   KATEGORI_INVALID: "Pilih Sabtu Sore, Minggu 1, atau Minggu 2.",
+  PIN_WRONG: "PIN salah.",
+  PIN_LOCKED: "Terlalu banyak salah. Coba lagi 15 menit lagi, atau minta Admin mereset PIN.",
+  PIN_INVALID: "PIN harus 6 angka.",
+  PIN_MISMATCH: "Pengulangan PIN tidak sama.",
+  PIN_DEFAULT: "PIN baru tidak boleh sama dengan PIN bawaan (123456).",
+  LINGKUNGAN_NONAKTIF: "Lingkungan ini tidak aktif.",
+  BUKAN_MILIK: "Data ini milik lingkungan lain.",
+  MASTER_DIPAKAI: "Data sudah dipakai sehingga tidak bisa dihapus. Nonaktifkan saja.",
   TIPE_INVALID: "Bagian tidak valid.",
   LINES_INVALID: "Data isian tidak valid.",
   SESSION_NOT_FOUND: "Sesi tidak ditemukan.",
