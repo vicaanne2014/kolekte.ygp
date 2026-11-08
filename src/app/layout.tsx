@@ -5,6 +5,7 @@ export const metadata: Metadata = {
   title: "Kolekte",
   description: "Pencatatan hasil kolekte per lingkungan",
   manifest: "/manifest.webmanifest",
+  icons: { icon: "/icon.svg" },
 };
 export const viewport: Viewport = { width: "device-width", initialScale: 1, themeColor: "#8c1d2c" };
 
