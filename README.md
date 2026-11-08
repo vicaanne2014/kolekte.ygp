@@ -43,7 +43,7 @@ Setelah masuk, isian, review, dan hasil di PWA **hanya untuk lingkungan itu send
 | `/hasil` | Hasil akhir per misa (baca saja, lingkungan sendiri): total per kantong, rekap per pecahan dipisah per kantong |
 | `/pin` | Reset PIN (wajib sekali dari PIN bawaan), lalu Ganti PIN: PIN lama 1x, PIN baru 2x |
 | `/admin`, `/admin/{id}` | Back Office: daftar sesi (lintas lingkungan), detail, review total (Admin Keuangan) |
-| `/admin/master/lingkungan`, `/admin/master/misa` | Master data Lingkungan dan Misa (CRUD) |
+| `/admin/master/lingkungan`, `/admin/master/misa` | Daftar master data dengan pencarian dan filter; **Tambah** di `.../baru`, **Ubah** di `.../{id}` |
 | `/admin/pin` | Reset PIN lingkungan ke 123456 |
 
 ## Tampilan
@@ -51,6 +51,11 @@ Setelah masuk, isian, review, dan hasil di PWA **hanya untuk lingkungan itu send
 - **Logo paroki** (`docs/logo.png`) tampil di header PWA, halaman masuk, login Back Office, dan sidebar. Versi ringan dan ikon aplikasi ada di `public/` (`logo.png`, `icon-192.png`, `icon-512.png`, `apple-touch-icon.png`). Untuk mengganti logo, ganti `docs/logo.png` lalu jalankan `python scripts/make-logos.py .` (butuh Pillow).
 - **Warna:** hijau tua (`--accent-dark`) untuk header PWA dan sidebar, hijau (`--accent`) untuk tombol dan tautan. Diatur di `src/app/globals.css`.
 - **Back Office memakai sidebar** sebagai satu-satunya navigasi: Sesi Kolekte, Lingkungan / Wilayah, Misa, PIN Lingkungan, dan Keluar. Di HP sidebar menjadi bilah atas.
+
+## Daftar, pencarian, dan notifikasi
+
+- Semua daftar di Back Office (Sesi Kolekte, Master Lingkungan, Master Misa, PIN Lingkungan) punya **pencarian dan filter**. Tambah dan Ubah master data ada di halaman tersendiri.
+- Setiap perubahan yang berhasil (di Back Office maupun PWA) menampilkan **notifikasi pop-up** di kanan bawah, mis. "Draft tersimpan", "Bagian disetujui", "Data dihapus".
 
 ## Yang sengaja belum ada
 

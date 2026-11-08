@@ -296,9 +296,13 @@ Halaman `/hasil` (GET: `tanggal`, `misa`) membaca sesi pada `(tanggal, misa_id, 
 
 Lintas lingkungan hanya tersedia di Back Office. Finalisasi tetap `bo_approve` oleh Admin Keuangan.
 
+### 6.9b Notifikasi (toast)
+
+Setiap aksi server yang mengubah data, bila berhasil, mengarahkan ke halaman berikutnya dengan `?ok=<kode>`; komponen klien `Toast` (di layout utama, dibungkus `Suspense`) membaca kode itu, menampilkan pesan dari `OK_MESSAGES` (`src/lib/kolekte.ts`) sebagai pop-up kanan bawah, lalu menghapus `?ok` dari alamat dengan `history.replaceState` agar tidak muncul lagi saat dimuat ulang. Kode: `masuk`, `keluar`, `draft`, `submit`, `approve`, `edit`, `pin`, `pin_reset`, `created`, `updated`, `deleted`, `aktif`, `nonaktif`, `closed`, `returned`. Kode tak dikenal diabaikan. **Galat** tetap lewat `?e=<kode>` dan tampil inline (`Msg`). Notifikasi hanya untuk pelaku aksi; tidak ada pusat notifikasi antar pengguna.
+
 ### 6.10 Master data (Back Office)
 
-- Halaman `/admin/master/lingkungan` dan `/admin/master/misa`, konfigurasi di `src/lib/master.ts`; aksi `addMaster`, `updateMaster`, `toggleMaster`, `hapusMaster` di `src/app/admin/master-actions.ts`. Peran: Admin dan Admin Keuangan.
+- Daftar `/admin/master/{key}` dengan pencarian nama dan filter status (dan jenis untuk Misa); **Tambah** di `/admin/master/{key}/baru` dan **Ubah** di `/admin/master/{key}/{id}`. Konfigurasi di `src/lib/master.ts`. Halaman `/admin/master/lingkungan` dan `/admin/master/misa`, konfigurasi di `src/lib/master.ts`; aksi `addMaster`, `updateMaster`, `toggleMaster`, `hapusMaster` di `src/app/admin/master-actions.ts`. Peran: Admin dan Admin Keuangan.
 - Halaman master memilih kolom secara eksplisit sehingga `pin_hash` tidak pernah ikut dibaca.
 
 ---

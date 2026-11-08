@@ -77,3 +77,23 @@ const ERRORS: Record<string, string> = {
   MASTER_ERROR: "Gagal menyimpan. Pastikan data valid dan tidak kembar.",
 };
 export const errMsg = (code?: string) => (code ? ERRORS[code] ?? code : "");
+
+// Notifikasi (toast) setelah perubahan berhasil. Kode dikirim lewat ?ok=<kode> oleh aksi server.
+export const OK_MESSAGES: Record<string, string> = {
+  "1": "Tersimpan.",
+  masuk: "Berhasil masuk.",
+  keluar: "Anda sudah keluar.",
+  draft: "Draft tersimpan.",
+  submit: "Bagian disubmit dan menunggu review.",
+  approve: "Bagian disetujui.",
+  edit: "Perubahan tersimpan. Lanjutkan dengan approve.",
+  pin: "PIN berhasil diganti.",
+  pin_reset: "PIN direset ke 123456. Lingkungan wajib menggantinya saat masuk.",
+  created: "Data berhasil ditambahkan.",
+  updated: "Perubahan tersimpan.",
+  deleted: "Data dihapus.",
+  aktif: "Data diaktifkan.",
+  nonaktif: "Data dinonaktifkan.",
+  closed: "Sesi disetujui dan ditutup.",
+  returned: "Bagian dikembalikan untuk diperbaiki.",
+};

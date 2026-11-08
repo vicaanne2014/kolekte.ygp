@@ -18,10 +18,6 @@ function value(field: Field, f: FormData): string | number | boolean | null {
   return raw === "" ? null : raw;
 }
 
-function done(key: string, error: boolean): never {
-  redirect(`/admin/master/${key}${error ? "?e=MASTER_ERROR" : ""}`);
-}
-
 function collect(key: string, f: FormData, onlyEditable: boolean) {
   const def = MASTER[key];
   const row: Record<string, unknown> = {};
@@ -34,25 +30,38 @@ function collect(key: string, f: FormData, onlyEditable: boolean) {
   return row;
 }
 
+const withParam = (url: string, k: string, v: string) => `${url}${url.includes("?") ? "&" : "?"}${k}=${encodeURIComponent(v)}`;
+
+// Kembali ke daftar dengan pencarian/filter yang sama (hanya alamat di dalam master ini yang dipakai).
+function kembali(f: FormData, key: string) {
+  const k = str(f, "kembali");
+  return k.startsWith(`/admin/master/${key}`) && !k.startsWith("//") ? k : `/admin/master/${key}`;
+}
+
 // Admin dan Admin Keuangan sama-sama boleh mengelola master data.
 export async function addMaster(f: FormData) {
   await requireBo();
   const key = str(f, "key");
   if (!MASTER[key]) redirect("/admin");
+  const baru = `/admin/master/${key}/baru`;
   const row = collect(key, f, false);
-  if (!row) done(key, true);
+  if (!row) redirect(withParam(baru, "e", "MASTER_ERROR"));
   const { error } = await db.from(MASTER[key].table).insert(row);
-  done(key, !!error);
+  if (error) redirect(withParam(baru, "e", "MASTER_ERROR"));
+  redirect(withParam(`/admin/master/${key}`, "ok", "created"));
 }
 
 export async function updateMaster(f: FormData) {
   await requireBo();
   const key = str(f, "key");
   if (!MASTER[key]) redirect("/admin");
+  const id = str(f, "id");
+  const ubah = `/admin/master/${key}/${id}`;
   const row = collect(key, f, true);
-  if (!row) done(key, true);
-  const { error } = await db.from(MASTER[key].table).update(row).eq("id", str(f, "id"));
-  done(key, !!error);
+  if (!row) redirect(withParam(ubah, "e", "MASTER_ERROR"));
+  const { error } = await db.from(MASTER[key].table).update(row).eq("id", id);
+  if (error) redirect(withParam(ubah, "e", "MASTER_ERROR"));
+  redirect(withParam(`/admin/master/${key}`, "ok", "updated"));
 }
 
 // Hapus hanya bila belum dipakai (database menolak bila sudah dipakai); selain itu cukup dinonaktifkan.
@@ -61,7 +70,8 @@ export async function hapusMaster(f: FormData) {
   const key = str(f, "key");
   if (!MASTER[key]) redirect("/admin");
   const { error } = await db.from(MASTER[key].table).delete().eq("id", str(f, "id"));
-  redirect(`/admin/master/${key}${error ? "?e=MASTER_DIPAKAI" : ""}`);
+  const url = kembali(f, key);
+  redirect(error ? withParam(url, "e", "MASTER_DIPAKAI") : withParam(url, "ok", "deleted"));
 }
 
 // Nonaktifkan / aktifkan kembali.
@@ -73,5 +83,6 @@ export async function toggleMaster(f: FormData) {
     .from(MASTER[key].table)
     .update({ aktif: f.get("aktif") === "true" })
     .eq("id", str(f, "id"));
-  done(key, !!error);
+  const url = kembali(f, key);
+  redirect(error ? withParam(url, "e", "MASTER_ERROR") : withParam(url, "ok", f.get("aktif") === "true" ? "aktif" : "nonaktif"));
 }

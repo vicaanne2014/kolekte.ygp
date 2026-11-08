@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import { Suspense } from "react";
 import SiteHeader from "@/components/SiteHeader";
+import Toast from "@/components/Toast";
 
 export const metadata: Metadata = {
   title: "Kolekte",
@@ -19,6 +21,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body>
         <SiteHeader />
         {children}
+        <Suspense fallback={null}>
+          <Toast />
+        </Suspense>
       </body>
     </html>
   );

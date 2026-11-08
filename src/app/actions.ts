@@ -26,12 +26,12 @@ export async function masuk(f: FormData) {
   const v = Number(data);
   if (!(v > 0)) back(path, pinErr(v));
   await startPwaSession(l, v);
-  redirect("/"); // bila PIN masih bawaan, halaman beranda mengarahkan ke /pin (Reset PIN)
+  redirect("/?ok=masuk"); // bila PIN masih bawaan, beranda mengarahkan ke /pin (Reset PIN)
 }
 
 export async function keluar() {
   await endPwaSession();
-  redirect("/masuk");
+  redirect("/masuk?ok=keluar");
 }
 
 // "Reset PIN" (pertama kali, dari PIN bawaan) dan "Ganti PIN": PIN lama 1x + PIN baru 2x (diulang).
@@ -46,7 +46,7 @@ export async function gantiPin(f: FormData) {
   const v = Number(data);
   if (!(v > 0)) back("/pin", pinErr(v));
   await startPwaSession(me.id, v);
-  redirect(me.wajibGanti ? "/" : "/pin?ok=1");
+  redirect(me.wajibGanti ? "/?ok=pin" : "/pin?ok=pin");
 }
 
 // ---------- Pengecekan kepemilikan (aksi di PWA tidak boleh menyentuh data lingkungan lain) ----------
@@ -114,9 +114,9 @@ export async function saveSection(f: FormData) {
   if (str(f, "intent") === "submit") {
     const sub = await db.rpc("submit_section", { p_session: session, p_tipe: tipe, p_nama: nama });
     if (sub.error) back(path, sub.error.message);
-    redirect(`/s/${session}`);
+    redirect(`/s/${session}?ok=submit`);
   }
-  redirect(`${path}?ok=1`);
+  redirect(`${path}?ok=draft`);
 }
 
 // ---------- PWA: pereview (hanya data lingkungan sendiri) ----------
@@ -133,7 +133,7 @@ export async function approveSections(f: FormData) {
   if (!(await sectionsOwnedBy(ids, me.id))) back(path, "BUKAN_MILIK");
   const { error } = await db.rpc("approve_sections", { p_nama: nama, p_ids: ids });
   if (error) back(path, error.message);
-  redirect(`${path}&ok=1`);
+  redirect(`${path}&ok=approve`);
 }
 
 // Pereview mengedit isian dulu (status tetap menunggu), lalu kembali ke daftar untuk approve.
@@ -159,7 +159,7 @@ export async function reviewEdit(f: FormData) {
     .maybeSingle();
   const s: any = (data as any)?.kolekte_session;
   if (!s) redirect("/review");
-  redirect(`${reviewPath(s.tanggal, s.misa_id, nama)}&ok=1`);
+  redirect(`${reviewPath(s.tanggal, s.misa_id, nama)}&ok=edit`);
 }
 
 // ---------- Back Office ----------
@@ -176,20 +176,21 @@ export async function login(f: FormData) {
     await auth.auth.signOut();
     back("/admin/login", "LOGIN_FAILED");
   }
-  redirect("/admin");
+  redirect("/admin?ok=masuk");
 }
 
 export async function logout() {
   const auth = await authClient();
   await auth.auth.signOut();
-  redirect("/admin/login");
+  redirect("/admin/login?ok=keluar");
 }
 
 export async function approveSession(f: FormData) {
   const user = await requireBo();
   const id = str(f, "id");
   const { error } = await db.rpc("bo_approve", { p_session: id, p_user: user.id, p_note: str(f, "note") });
-  back(`/admin/${id}`, error?.message);
+  if (error) back(`/admin/${id}`, error.message);
+  redirect(`/admin/${id}?ok=closed`);
 }
 
 export async function returnSession(f: FormData) {
@@ -201,12 +202,14 @@ export async function returnSession(f: FormData) {
     p_sections: f.getAll("sections").map(String),
     p_note: str(f, "note"),
   });
-  back(`/admin/${id}`, error?.message);
+  if (error) back(`/admin/${id}`, error.message);
+  redirect(`/admin/${id}?ok=returned`);
 }
 
 // Admin / Admin Keuangan mereset PIN lingkungan. Lingkungan itu membuat PIN baru (dan mengulanginya) saat masuk berikutnya.
 export async function resetPin(f: FormData) {
   const user = await requireBo();
   const { error } = await db.rpc("bo_reset_pin", { p_lingkungan: str(f, "lingkungan"), p_user: user.id });
-  back("/admin/pin", error?.message);
+  if (error) back("/admin/pin", error.message);
+  redirect("/admin/pin?ok=pin_reset");
 }
